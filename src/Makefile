@@ -1,9 +1,9 @@
 CFLAGS = -g -Wall -fno-strict-aliasing 
 LDFLAGS = -lpthread -lrt -lm -lssl -lcrypto
-SHARED   =   -fPIC
-DEPDIR = 
-INCLUDE = -I./
-DEFINE =
+SHARED  = -fPIC
+DEPDIR  = 
+INCLUDE = -I./ -I../deps/lua-5.3.0/src
+DEFINE  =
 LIBNAME = libchuck.a
 
 # Platform-specific overrides
@@ -21,9 +21,13 @@ endif
 
 source =  exception.c\
 		  util/time.c\
+		  util/minheap.c\
 		  thread/thread.c\
 		  thread/spinlock.c\
+		  lua/lua_util.c\
 		  log.c\
+		  str.c\
+		  mem/obj_allocator.c\
 		  refobj.c
 
 test-source = test/testexception.c\

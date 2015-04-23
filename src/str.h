@@ -13,18 +13,24 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/	
-
-#ifndef _TLS_H
-#define _TLS_H
-
+*/
+#ifndef _STRING_H__
+#define _STRING_H__
 #include <stdint.h>
-#include <pthread.h>
 
-#define MAX_TLS_SIZE 4096
+typedef struct string string;
 
-void*    tls_get(uint16_t key);
+string*  string_new(const char *);
 
-int32_t  tls_set(uint16_t key,void*);
+void     string_del(string*);
+
+const char *string_cstr(string*);
+
+void     string_replace(string*,const char*,uint32_t n);
+
+int32_t  string_len(string*);
+
+void     string_append(string*,const char*);
+
 
 #endif
