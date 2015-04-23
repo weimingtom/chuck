@@ -23,10 +23,9 @@
 #include <string.h>
 #include <pthread.h>
 #include <signal.h>
-#include "list.h"
+#include "util/list.h"
 #include "exceptionno.h"
-
-//#include "log.h"
+#include "log.h"
 
 typedef struct
 {
@@ -67,7 +66,6 @@ static inline void clear_callstack(exception_frame *frame)
 		list_pushback(&epst->csf_pool,list_pop(&frame->call_stack));
 }
 
-
 static inline void print_call_stack(exception_frame *frame)
 {
 
@@ -90,7 +88,7 @@ static inline void print_call_stack(exception_frame *frame)
         node = node->next;
     }
     printf("%s",buf);
-    //SYS_LOG(LOG_ERROR,"%s",buf);
+    SYS_LOG(LOG_ERROR,"%s",buf);
 }
 
 #define PRINT_CALL_STACK print_call_stack(&frame)
@@ -126,13 +124,13 @@ static inline void expstack_push(exception_frame *frame)
 static inline exception_frame* expstack_pop()
 {
     list *expstack = get_current_thd_exceptionstack();
-    retuirn (exception_frame*)kn_list_pop(expstack);
+    return (exception_frame*)list_pop(expstack);
 }
 
 static inline exception_frame* expstack_top()
 {
     list *expstack = get_current_thd_exceptionstack();
-    return (exception_frame*)kn_list_begin(expstack);
+    return (exception_frame*)list_begin(expstack);
 }
 
 extern void exception_throw(int32_t code,const char *file,const char *func,int32_t line,siginfo_t* info);

@@ -14,8 +14,8 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _KN_REFOBJ_H
-#define _KN_REFOBJ_H
+#ifndef _REFOBJ_H
+#define _REFOBJ_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -23,17 +23,15 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <assert.h>
-#include "kn_atomic.h"
-#include "kn_except.h"  
+#include "atomic.h"
+#include "exception.h"  
   
-typedef  void (*refobj_destructor)(void*);
-
-typedef struct refobj
+typedef struct
 {
         volatile uint32_t refcount;
-        uint32_t               pad1;
+        uint32_t          pad1;
         volatile uint32_t flag;  
-        uint32_t               pad2;      
+        uint32_t          pad2;      
         union{
             struct{
                 volatile uint32_t low32; 
@@ -41,14 +39,14 @@ typedef struct refobj
             };
             volatile uint64_t identity;
         };
-        void (*destructor)(void*);
+        void (*dctor)(void*);
 }refobj;
 
-void refobj_init(refobj *r,void (*destructor)(void*));
+void refobj_init(refobj *r,void (*dctor)(void*));
 
 static inline uint32_t refobj_inc(refobj *r)
 {
-    return ATOMIC_INCREASE(&r->refcount);
+    return ATOMIC_INCREASE_FETCH(&r->refcount);
 }
 
 uint32_t refobj_dec(refobj *r);
@@ -61,24 +59,24 @@ typedef struct{
         };
         uint32_t _data[4];
     };
-}ident;
+}refhandle;
 
-refobj *cast2refobj(ident _ident);
 
-static inline ident make_ident(refobj *ptr)
-{
-    return (ident){.identity=ptr->identity,.ptr=ptr};
+refobj *cast2refobj(refhandle h);
+
+static inline void refhandle_clear(refhandle *h){
+    h->ptr = NULL;
+    h->identity = 0;
 }
 
-static const ident empty_ident = {.identity=0,.ptr=NULL};
-
-static inline void make_empty_ident(ident *_ident)
-{
-    *_ident = empty_ident;
+static inline int32_t is_vaild_refhandle(refhandle *h){
+    if(!h->ptr || !(h->identity > 0))
+        return 0;
+    return 1;
 }
 
-static inline int is_empty_ident(ident _ident){
-    return _ident.ptr == NULL ? 1 : 0;
-}
+static inline refhandle get_refhandle(refobj *o){
+    return (refhandle){.identity=o->identity,.ptr=o}; 
+} 
 
 #endif

@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include "exception.h"
 #include "exceptionno.h"
-//#include "log.h"
+#include "log.h"
 
 pthread_key_t g_exception_key;
 #ifndef __GNUC__
@@ -16,16 +16,15 @@ pthread_once_t g_exception_key_once = PTHREAD_ONCE_INIT;
 
 static void delete_thd_exstack(void  *arg)
 {
-	struct kn_exception_perthd_st *epst = (struct kn_exception_perthd_st*)arg;
-	while(kn_list_size(&epst->csf_pool))
-		free(kn_list_pop(&epst->csf_pool));
+	exception_perthd_st *epst = (exception_perthd_st*)arg;
+	while(list_size(&epst->csf_pool))
+		free(list_pop(&epst->csf_pool));
 	free(arg);
 }
 
 int setup_sigsegv();
 static void signal_segv(int signum,siginfo_t* info, void*ptr){
-	kn_exception_throw(except_segv_fault,__FILE__,__FUNCTION__,__LINE__,info);
-	return;
+	exception_throw(except_segv_fault,__FILE__,__FUNCTION__,__LINE__,info);
 }
 
 int setup_sigsegv(){
@@ -43,7 +42,6 @@ int setup_sigsegv(){
 
 static void signal_sigbus(int signum,siginfo_t* info, void*ptr){
 	THROW(except_sigbus);
-	return;
 }
 
 int setup_sigbus(){
@@ -60,7 +58,6 @@ int setup_sigbus(){
 
 static void signal_sigfpe(int signum,siginfo_t* info, void*ptr){
 	THROW(except_arith);
-	return;
 }
 
 int setup_sigfpe(){
@@ -87,7 +84,7 @@ __attribute__((constructor(103))) static void exception_init(){
 }
 
 
-static inline callstack_frame * get_csf(kn_list *pool)
+static inline callstack_frame *get_csf(list *pool)
 {
 	int32_t i;
 	callstack_frame *call_frame;
@@ -125,9 +122,9 @@ void exception_throw(int32_t code,const char *file,const char *func,int32_t line
 	size_t                  sz;
 	int                     i;
 	int                     sig = 0;
-	exception_perthd_st* epst;
-	callstack_frame*     call_frame;
-	exception_frame*     frame = kn_expstack_top();
+	exception_perthd_st		*epst;
+	callstack_frame			*call_frame;
+	exception_frame			*frame = expstack_top();
 	if(frame)
 	{
 		frame->exception = code;
@@ -149,19 +146,22 @@ void exception_throw(int32_t code,const char *file,const char *func,int32_t line
 			call_frame = get_csf(&epst->csf_pool);
 			char *str1 = strstr(strings[i],"[");
 			char *str2 = strstr(str1,"]");
-			if(str1 && str2 && str2 - str1 < 128){
-				int len = str2 - str1 - 1;
-				char addr[128];
-				strncpy(addr,str1+1,len);
-				addr[len] = '\0';
-				char buf[1024];
-				if(0 == addr2line(addr,buf,1024)){
-					snprintf(call_frame->info,1024,"%s %s\n",strings[i],buf);
-				}else{
-					snprintf(call_frame->info,1024,"%s\n",strings[i]);
-				}				
-			}else
+			
+			do{
+				if(str1 && str2 && str2 - str1 < 128){
+					int len = str2 - str1 - 1;
+					char addr[128];
+					strncpy(addr,str1+1,len);
+					addr[len] = '\0';
+					char buf[1024];
+					if(0 == addr2line(addr,buf,1024)){
+						snprintf(call_frame->info,1024,"%s %s\n",strings[i],buf);
+						break;
+					}
+				}
 				snprintf(call_frame->info,1024,"%s\n",strings[i]);
+			}while(0);
+			
 			list_pushback(&frame->call_stack,&call_frame->node);
 			if(strstr(strings[i],"main+"))
 				break;
@@ -176,16 +176,16 @@ void exception_throw(int32_t code,const char *file,const char *func,int32_t line
 	{
 		sz = backtrace(bt, 64);
 		strings = backtrace_symbols(bt, sz);
-    		char logbuf[MAX_LOG_SIZE];
-    		char *ptr = logbuf;
-    		int32_t size = 0;	
-    		void *addr = NULL;
-    		if(info)
-    			addr = info->si_addr;
-    		if(code == except_segv_fault)
-	    		size += snprintf(ptr,MAX_LOG_SIZE," %s [invaild access addr:%p]\n",exception_description(code),addr);
-    		else
-	    		size += snprintf(ptr,MAX_LOG_SIZE," %s\n",exception_description(code));
+		char logbuf[MAX_LOG_SIZE];
+		char *ptr = logbuf;
+		int32_t size = 0;	
+		void *addr = NULL;
+		if(info)
+			addr = info->si_addr;
+		if(code == except_segv_fault)
+    		size += snprintf(ptr,MAX_LOG_SIZE," %s [invaild access addr:%p]\n",exception_description(code),addr);
+		else
+    		size += snprintf(ptr,MAX_LOG_SIZE," %s\n",exception_description(code));
 		ptr = logbuf + size;	    		    		
  		int f = 0;   			
 		if(code == except_segv_fault || code == except_sigbus || code == except_arith) 
@@ -196,24 +196,25 @@ void exception_throw(int32_t code,const char *file,const char *func,int32_t line
 		for(; i < sz; ++i){
 			char *str1 = strstr(strings[i],"[");
 			char *str2 = strstr(str1,"]");
-			if(str1 && str2 && str2 - str1 < 128){
-				int len = str2 - str1 - 1;
-				char addr[128];
-				strncpy(addr,str1+1,len);
-				addr[len] = '\0';	
-				char buf[1024];
-				if(0 == addr2line(addr,buf,1024)){
-	        				size += snprintf(ptr,MAX_LOG_SIZE-size,"    % 2d: %s %s\n",++f,strings[i],buf);
-				}else{
-	        				size += snprintf(ptr,MAX_LOG_SIZE-size,"    % 2d: %s\n",++f,strings[i]);
+			do{
+				if(str1 && str2 && str2 - str1 < 128){
+					int len = str2 - str1 - 1;
+					char addr[128];
+					strncpy(addr,str1+1,len);
+					addr[len] = '\0';	
+					char buf[1024];
+					if(0 == addr2line(addr,buf,1024)){
+		        		size += snprintf(ptr,MAX_LOG_SIZE-size,"    % 2d: %s %s\n",++f,strings[i],buf);
+		        		break;
+					}
 				}
-			}else
-        				size += snprintf(ptr,MAX_LOG_SIZE-size,"    % 2d: %s\n",++f,strings[i]);						
+        		size += snprintf(ptr,MAX_LOG_SIZE-size,"    % 2d: %s\n",++f,strings[i]);						
+			}while(0);
 			ptr = logbuf + size;
 			if(strstr(strings[i],"main+"))
 				break;
 		}
-		//SYS_LOG(LOG_ERROR,"%s",logbuf);
+		SYS_LOG(LOG_ERROR,"%s",logbuf);
 		free(strings);
 		exit(0);
 	}

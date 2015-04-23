@@ -13,41 +13,35 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-#ifndef _EXCEPTIONNO_H
-#define _EXCEPTIONNO_H
+*/	
+#ifndef _THREAD_H
+#define _THREAD_H
+#include <pthread.h>
+#include <stdint.h>
+#include "thread/sync.h"
 
-
-#include <stdlib.h>
-
-#define MAX_EXCEPTION 4096
-
-//system define exception
-enum{         
-	except_segv_fault = 0,       
-	except_sigbus,           
-	except_arith,
-    system_except_end,                      
-};
-
-//user define exception
-enum{
-    testexception3 = system_except_end,
-};
-
-static const char* exceptions[MAX_EXCEPTION] = {
-    "except_segv_fault",
-    "except_sigbus",
-    "except_arith",
-    "testexception3",
-    NULL,
-};
-
-static inline const char *exception_description(int expno)
+typedef struct
 {
-    if(expno >= MAX_EXCEPTION) return "unknow exception";
-    if(exceptions[expno] == NULL) return "unknow exception";
-    return exceptions[expno];
+	pthread_t threadid;
+    int32_t   joinable;
+}thread;
+
+
+enum
+{
+	DETACH   = 1,
+	JOINABLE = 1 << 2,
+    WAITRUN  = 1 << 3,
+};
+
+thread *thread_new(int32_t flag,void *(*routine)(void*),void *ud);
+
+void   *thread_del(thread*);
+void   *thread_join(thread*);
+
+
+static inline pthread_t thread_id(thread *t){
+    return t->threadid;
 }
 
 #endif

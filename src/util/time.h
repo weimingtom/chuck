@@ -100,11 +100,11 @@ static inline struct _clock* get_thread_clock()
 static inline void systick_once_routine(){
     pthread_key_create(&g_systime_key,NULL);
 }
-static inline uint64_t kn_systemms64()
+static inline uint64_t systick64()
 {
     pthread_once(&g_systime_key_once,systick_once_routine);
 #else    
-static inline uint64_t kn_systemms64()
+static inline uint64_t systick64()
 {
 #endif
     uint64_t tsc = _clock_rdtsc();
@@ -125,21 +125,10 @@ static inline uint64_t kn_systemms64()
     return c->last_time;
 }
 
-static inline uint32_t kn_systemms()
-{
-    return (uint32_t)kn_systemms64();
-}
+#define systick32() ((uint32_t)systick64())     
 
-static inline time_t kn_systemsec()
-{
-	return time(NULL);
-}
+#define SLEEPMS(MS) (usleep((MS)*1000))
 
-static inline void kn_sleepms(uint32_t ms)
-{
-    usleep(ms*1000);
-
-}
 
 /*
 static inline char *GetCurrentTimeStr(char *buf)
