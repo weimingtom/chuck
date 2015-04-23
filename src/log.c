@@ -43,7 +43,7 @@ struct{
 void logqueue_push(struct log_item *item){
 	mutex_lock(logqueue.mtx);
 	list_pushback(&logqueue.share_queue,(listnode*)item);
-	if(list_size(&logqueue.share_queue) == 1 && logqueue.wait){
+	if(logqueue.wait && list_size(&logqueue.share_queue) == 1){
 		mutex_unlock(logqueue.mtx);
 		condition_signal(logqueue.cond);
 		return;
