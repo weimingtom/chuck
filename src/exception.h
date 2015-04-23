@@ -24,8 +24,37 @@
 #include <pthread.h>
 #include <signal.h>
 #include "util/list.h"
-#include "exceptionno.h"
 #include "log.h"
+
+#define MAX_EXCEPTION 4096
+
+//system define exception
+enum{         
+    except_segv_fault = 0,       
+    except_sigbus,           
+    except_arith,
+    system_except_end,                      
+};
+
+//user define exception
+enum{
+    testexception3 = system_except_end,
+};
+
+static const char* exceptions[MAX_EXCEPTION] = {
+    "except_segv_fault",
+    "except_sigbus",
+    "except_arith",
+    "testexception3",
+    NULL,
+};
+
+static inline const char *exception_description(int expno)
+{
+    if(expno >= MAX_EXCEPTION) return "unknow exception";
+    if(exceptions[expno] == NULL) return "unknow exception";
+    return exceptions[expno];
+}
 
 typedef struct
 {

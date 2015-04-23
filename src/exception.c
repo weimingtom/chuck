@@ -6,7 +6,6 @@
 #include <execinfo.h>
 #include <unistd.h>
 #include "exception.h"
-#include "exceptionno.h"
 #include "log.h"
 
 pthread_key_t g_exception_key;
