@@ -29,7 +29,8 @@ typedef struct dlistnode
     struct dlist     *owner;
 }dlistnode;
 
-typedef struct
+typedef struct dlist
+{
     struct dlistnode head;
     struct dlistnode tail;
 }dlist;
@@ -49,6 +50,17 @@ static inline dlistnode *dlist_end(dlist *dl)
     return &dl->tail;
 }
 
+static inline dlistnode *dlist_rbegin(dlist *dl)
+{
+    return dl->tail.pre;
+}
+
+static inline dlistnode *dlist_rend(dlist *dl)
+{
+    return &dl->head;
+}
+
+
 
 static inline int32_t dlist_remove(dlistnode *dln)
 {
@@ -63,7 +75,7 @@ static inline int32_t dlist_remove(dlistnode *dln)
 
 static inline dlistnode *dlist_pop(dlist *dl)
 {
-    kn_dlist_node *n = NULL;
+    dlistnode *n = NULL;
     if(!dlist_empty(dl)){
         n = dl->head.next;
         dlist_remove(n);
@@ -73,7 +85,7 @@ static inline dlistnode *dlist_pop(dlist *dl)
 
 static inline int32_t dlist_pushback(dlist *dl,dlistnode *dln)
 {
-    if(dln->owner || dln->pre || dln->next)) 
+    if(dln->owner || dln->pre || dln->next) 
         return -1;
     dl->tail.pre->next = dln;
     dln->pre = dl->tail.pre;

@@ -29,10 +29,9 @@ typedef struct{
        	node = (nnode*)list_pop(LIST);\
        	if(node){\
        	 __result = node->n;\
-       	 free(node);\
+       	 free(node);}\
        }while(0);\
        __result;})
-#endif
 
 
 int main(){
@@ -40,20 +39,46 @@ int main(){
 	list_init(&l);
 	int i = 0;
 	for(;i < 10;++i){
-		PUSH_BACK(l,i);
+		PUSH_BACK(&l,i);
 	}
 
-	for(;i >= 0;i--){
-		print("%d\n",POP(l));
+	int size = list_size(&l);
+	for(i = 0;i < size;++i){
+		printf("%d\n",POP(&l));
 	}
+
+	printf("-----------reverse---------\n");
 
 	for(i = 0;i < 10;++i){
-		PUSH_BACK(l,i);
+		PUSH_BACK(&l,i);
+	}
+	size = list_size(&l);
+	for(i = 0;i < size;++i){
+		printf("%d\n",POP(&l));
 	}
 
-	for(;i >= 0;i--){
-		print("%d\n",POP(l));
+
+	printf("-----------pushlist---------\n");	
+
+	for(i = 0;i < 10;++i){
+		PUSH_BACK(&l,i);
 	}
+
+	list ll;
+	list_init(&ll);
+	for(i = 0;i < 10;++i){
+		PUSH_BACK(&ll,i*10);
+	}
+
+	list_pushlist(&l,&ll);
+
+	printf("size ll:%d",list_size(&ll));
+	size = list_size(&l);
+	for(i = 0;i < size;++i){
+		printf("%d\n",POP(&l));
+	}
+
+
 
 
 	return 0;

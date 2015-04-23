@@ -97,7 +97,7 @@ static inline listnode* list_end(list *l)
 
 
 //append all the elements of b to a
-static inline void list_pushlist(list *a,kn_list *b)
+static inline void list_pushlist(list *a,list *b)
 {
 	if(a == b) 
 		return;	
@@ -108,8 +108,8 @@ static inline void list_pushlist(list *a,kn_list *b)
 			a->tail->next = b->head;
 		else
 			a->head = b->head;
-		a->tail = b ->tail;
-		a->head = b->tail = NULL;
+		a->tail = b->tail;
+		b->head = b->tail = NULL;
 		a->size += b->size;
 		b->size = 0;
 	}

@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef struct
 {
@@ -52,7 +54,7 @@ static inline int32_t bitset_test(bitset *bs,uint32_t index)
 		return 0;
 }
 
-static inline bitset_show(void *ptr,uint32_t size){
+static inline void bitset_show(void *ptr,uint32_t size){
 	bitset *b = bitset_new(size);
 	memcpy(b->bits,ptr,size);
 	int i = b->size-1;
