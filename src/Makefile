@@ -22,6 +22,7 @@ endif
 source =  exception.c\
 		  util/time.c\
 		  util/minheap.c\
+		  util/timewheel.c\
 		  thread/thread.c\
 		  thread/spinlock.c\
 		  lua/lua_util.c\
