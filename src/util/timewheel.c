@@ -7,8 +7,8 @@
 
 enum{
 	wheel_sec = 0,  //1000 ms
-	wheel_hour, //3599 s
-	wheel_day,  //23   h
+	wheel_hour,     //3599 s
+	wheel_day,      //23   h
 };
 
 
@@ -53,14 +53,16 @@ typedef struct wheelmgr{
 	uint64_t     lasttime;
 }wheelmgr;
 
-
+/*
 static inline void set(wheelmgr *m,timer *t,uint64_t tick){
 	uint64_t remain = t->expire > tick ? t->expire - tick:0;
-	wheel *w;
+	wheel *w = NULL;
 	do{
 		w = m->wheels[wheel_sec];
 		uint64_t s = wheel_size(wheel_sec) - w->cur;
 		if(s > remain) break;
+		
+
 		remain -= s;
 		remain /= 1000;
 		w = m->wheels[wheel_hour];
@@ -71,20 +73,23 @@ static inline void set(wheelmgr *m,timer *t,uint64_t tick){
 		w = m->wheels[wheel_day];
 		s = wheel_size(wheel_day) - w->cur;
 		if(s > remain) break;
-		t = NULL;		
+				
 	}while(0);
-	assert(t != NULL);
+	assert(w != NULL);
 	uint16_t i = (w->cur + remain)%(wheel_size(w->type));
-	//printf("%s,%d,%d,%d\n",
-	//	   w->type == wheel_sec ? "wheel_sec" : w->type == wheel_hour ? "wheel_hour":"wheel_day" ,
-	//	   w->cur,i,remain);
+	printf("type:%s,cur:%d,i:%d,remain:%d,uint64_t:%lld\n",
+		   w->type == wheel_sec ? "wheel_sec" : w->type == wheel_hour ? "wheel_hour":"wheel_day" ,
+		   w->cur,i,remain,tick);
 	dlist_pushback(&w->items[i],(dlistnode*)t);
 }
+
+static int g_c = 0;
 
 static void fire(wheelmgr *m,wheel *w,uint64_t tick){
 	timer *t;
 	dlist *items = &w->items[w->cur];
 	if(w->type == wheel_sec){
+		g_c++;
 		while((t = (timer*)dlist_pop(items))){
 			int32_t ret = t->callback(t->expire,t->ud);
 			if(ret >= 0 && ret <= MAX_TIMEOUT){
@@ -102,20 +107,23 @@ static void fire(wheelmgr *m,wheel *w,uint64_t tick){
 			}
 		}
 	}else{
+		//printf("fire,%lld\n",tick);
 		while((t = (timer*)dlist_pop(items))){
 			//find a suitable wheel
 			set(m,t,tick);
 		}
-		fire(m,m->wheels[w->type-1],tick);	
+		//fire(m,m->wheels[w->type-1],tick);	
 	}
 
 	uint16_t size = (uint16_t)wheel_size(w->type);
 	assert(size < 3600);	
 	w->cur = (w->cur+1)%size;	
+
 	if(w->cur == 0 && w->type != wheel_day){
 		fire(m,m->wheels[w->type+1],tick);
-	}
-}
+	}	
+
+}*/
 
 void wheelmgr_tick(wheelmgr *m,uint64_t now){
 	if(!m->lasttime){

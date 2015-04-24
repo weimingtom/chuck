@@ -1,4 +1,4 @@
-#ifndef  _BIT_H
+#ifndef _BIT_H
 #define _BIT_H
 
 #include <stdint.h>
