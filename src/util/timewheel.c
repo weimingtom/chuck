@@ -6,11 +6,10 @@
 
 
 enum{
-	wheel_sec = 0,  //1000 ms
-	wheel_hour,     //3599 s
-	wheel_day,      //23   h
+	wheel_sec = 0,  
+	wheel_hour,     
+	wheel_day,      
 };
-
 
 typedef struct {
 	uint8_t  type;
@@ -18,20 +17,15 @@ typedef struct {
 	dlist    items[0]; 
 }wheel;
 
-#define wheel_size(T) (T==wheel_sec?1000:T==wheel_hour?3599:T==wheel_day?23:-1)
+#define wheel_size(T) (T==wheel_sec?1000:T==wheel_hour?3600:T==wheel_day?24:-1)
+#define down_size(T) (T==wheel_sec?1:T==wheel_hour?1000:T==wheel_day?3600:-1)
 
 static wheel* wheel_new(uint8_t type){
-	wheel *w;
-	if(type == wheel_sec){
-		w = calloc(1,sizeof(*w)*1000*sizeof(dlist));
-	}else if(type == wheel_hour){
-		w = calloc(1,sizeof(*w)*3599*sizeof(dlist));
-	}else if(type == wheel_day){
-		w = calloc(1,sizeof(*w)*23*sizeof(dlist));	
-	}else 
+	if(type >  wheel_day)
 		return NULL;
+	wheel *w = calloc(1,sizeof(*w)*wheel_size(type)*sizeof(dlist));	
 	w->type = type;
-	w->cur = 0;	
+	w->cur = 0;
 	uint16_t size = (uint16_t)wheel_size(type);
 	uint16_t i = 0;
 	for(; i < size; ++i){
@@ -53,43 +47,63 @@ typedef struct wheelmgr{
 	uint64_t     lasttime;
 }wheelmgr;
 
-/*
-static inline void set(wheelmgr *m,timer *t,uint64_t tick){
-	uint64_t remain = t->expire > tick ? t->expire - tick:0;
-	wheel *w = NULL;
-	do{
-		w = m->wheels[wheel_sec];
-		uint64_t s = wheel_size(wheel_sec) - w->cur;
-		if(s > remain) break;
-		
 
-		remain -= s;
-		remain /= 1000;
-		w = m->wheels[wheel_hour];
-		s = wheel_size(wheel_hour) - w->cur;
-		if(s > remain) break;
-		remain -= s;
-		remain /= 3600;
-		w = m->wheels[wheel_day];
-		s = wheel_size(wheel_day) - w->cur;
-		if(s > remain) break;
-				
-	}while(0);
-	assert(w != NULL);
-	uint16_t i = (w->cur + remain)%(wheel_size(w->type));
-	printf("type:%s,cur:%d,i:%d,remain:%d,uint64_t:%lld\n",
-		   w->type == wheel_sec ? "wheel_sec" : w->type == wheel_hour ? "wheel_hour":"wheel_day" ,
-		   w->cur,i,remain,tick);
-	dlist_pushback(&w->items[i],(dlistnode*)t);
+static inline void add2wheel(wheelmgr *m,wheel *w,timer *t,uint64_t remain){
+	uint64_t slots = wheel_size(w->type) - w->cur;
+	if(slots > remain){
+		uint16_t i = (w->cur + remain)%(wheel_size(w->type));
+		dlist_pushback(&w->items[i],(dlistnode*)t);		
+	}else{
+		if(w->type == wheel_day)
+			return;
+		remain -= slots;
+		remain /= wheel_size(w->type);
+		return add2wheel(m,m->wheels[w->type+1],t,remain);		
+	}
 }
 
-static int g_c = 0;
+static inline void set(wheelmgr *m,timer *t,uint64_t tick,wheel *w){
+	assert(t->expire > tick);
+	if(t->expire > tick){
+		uint64_t remain = t->expire - tick;
+		add2wheel(m,w?w:m->wheels[wheel_sec],t,remain);
+	}
+}
 
-static void fire(wheelmgr *m,wheel *w,uint64_t tick){
+static inline void down(wheelmgr *m,timer *t,uint64_t tick,wheel *w){
+	assert(w->cur == 0);
+	assert(t->expire >= tick);
+	if(t->expire >= tick){
+		uint64_t remain = (t->expire - tick) - wheel_size(w->type-1)-1;
+		remain /= down_size(w->type);
+		uint16_t i = w->cur + remain;
+		dlist_pushback(&w->items[i],(dlistnode*)t);		
+	}	
+}
+
+static void _tick(wheelmgr *m,wheel *w,uint64_t tick){
 	timer *t;
 	dlist *items = &w->items[w->cur];
+	while((t = (timer*)dlist_pop(items))){
+		//find a suitable wheel
+		down(m,t,tick,m->wheels[w->type-1]);
+	}
+	uint16_t size = wheel_size(w->type); 
+	w->cur = (w->cur+1)%size;			
+	if(w->cur == 0 && w->type != wheel_day){
+		_tick(m,m->wheels[w->type+1],tick);
+	}	
+}
+
+static void fire(wheelmgr *m,wheel *w,uint64_t tick){
+	timer *t;	
+	uint16_t size = wheel_size(w->type); 
+	w->cur = (w->cur+1)%size;			
+	if(w->cur == 0 && w->type != wheel_day){
+		_tick(m,m->wheels[w->type+1],tick);
+	}
+	dlist *items = &w->items[w->cur];		
 	if(w->type == wheel_sec){
-		g_c++;
 		while((t = (timer*)dlist_pop(items))){
 			int32_t ret = t->callback(t->expire,t->ud);
 			if(ret >= 0 && ret <= MAX_TIMEOUT){
@@ -98,7 +112,7 @@ static void fire(wheelmgr *m,wheel *w,uint64_t tick){
 				}
 				t->expire = tick + t->timeout;
 				//register again
-				set(m,t,tick);
+				set(m,t,tick,NULL);
 			}else{
 				if(ret > 0){
 					//todo: log
@@ -106,24 +120,8 @@ static void fire(wheelmgr *m,wheel *w,uint64_t tick){
 				free(t);
 			}
 		}
-	}else{
-		//printf("fire,%lld\n",tick);
-		while((t = (timer*)dlist_pop(items))){
-			//find a suitable wheel
-			set(m,t,tick);
-		}
-		//fire(m,m->wheels[w->type-1],tick);	
-	}
-
-	uint16_t size = (uint16_t)wheel_size(w->type);
-	assert(size < 3600);	
-	w->cur = (w->cur+1)%size;	
-
-	if(w->cur == 0 && w->type != wheel_day){
-		fire(m,m->wheels[w->type+1],tick);
 	}	
-
-}*/
+}
 
 void wheelmgr_tick(wheelmgr *m,uint64_t now){
 	if(!m->lasttime){
@@ -134,16 +132,16 @@ void wheelmgr_tick(wheelmgr *m,uint64_t now){
 	}
 } 
 
-timer *wheelmgr_register(wheelmgr *m,uint32_t timeout,int32_t(*callback)(uint64_t,void*),void*ud){
+timer *wheelmgr_register(wheelmgr *m,uint64_t now,uint32_t timeout,int32_t(*callback)(uint64_t,void*),void*ud){
 	if(timeout == 0 || timeout > MAX_TIMEOUT || !callback)
 		return NULL;
-	uint64_t now = systick64(); 
+	//uint64_t now = systick64();
 	timer *t = calloc(1,sizeof(*t));
 	t->timeout = timeout;
 	t->expire = now + timeout;
 	t->callback = callback;
 	t->ud = ud;
-	set(m,t,now);
+	set(m,t,now,NULL);
 	return t;
 }
 

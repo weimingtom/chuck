@@ -32,7 +32,7 @@ enum{
 
 wheelmgr *wheelmgr_new();
 void      wheelmgr_del(wheelmgr*);
-timer    *wheelmgr_register(wheelmgr*,uint32_t timeout,int32_t(*)(uint64_t,void*),void*);
+timer    *wheelmgr_register(wheelmgr*,uint64_t now,uint32_t timeout,int32_t(*)(uint64_t,void*),void*);
 void      unregister_timer(timer*);
 void      wheelmgr_tick(wheelmgr*,uint64_t now); 
 
