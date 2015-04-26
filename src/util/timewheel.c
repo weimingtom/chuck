@@ -28,9 +28,8 @@ static wheel* wheel_new(uint8_t type){
 	w->cur = 0;
 	uint16_t size = (uint16_t)wheel_size(type);
 	uint16_t i = 0;
-	for(; i < size; ++i){
+	for(; i < size; ++i)
 		dlist_init(&w->items[i]);
-	}
 	return w;	
 }
 
@@ -62,10 +61,8 @@ static inline void add2wheel(wheelmgr *m,wheel *w,timer *t,uint64_t remain){
 
 static inline void _reg(wheelmgr *m,timer *t,uint64_t tick,wheel *w){
 	assert(t->expire > tick);
-	if(t->expire > tick){
-		uint64_t remain = t->expire - tick;
-		add2wheel(m,w?w:m->wheels[wheel_sec],t,remain);
-	}
+	if(t->expire > tick)
+		add2wheel(m,w?w:m->wheels[wheel_sec],t,t->expire - tick);
 }
 
 //将本级超时的定时器推到下级时间轮中
@@ -75,8 +72,7 @@ static inline void down(wheelmgr *m,timer *t,uint64_t tick,wheel *w){
 	if(t->expire >= tick){
 		uint64_t remain = (t->expire - tick) - wheel_size(w->type-1);
 		remain /= precision(w->type);
-		uint16_t i = w->cur + remain;
-		dlist_pushback(&w->items[i],(dlistnode*)t);		
+		dlist_pushback(&w->items[w->cur + remain],(dlistnode*)t);		
 	}	
 }
 
@@ -87,9 +83,8 @@ static inline void tickup(wheelmgr *m,wheel *w,uint64_t tick){
 	while((t = (timer*)dlist_pop(items)))
 		down(m,t,tick,m->wheels[w->type-1]);
 	w->cur = (w->cur+1)%wheel_size(w->type);			
-	if(w->cur == 0 && w->type != wheel_day){
+	if(w->cur == 0 && w->type != wheel_day)
 		tickup(m,m->wheels[w->type+1],tick);
-	}	
 }
 
 static void fire(wheelmgr *m,uint64_t tick){
@@ -101,8 +96,7 @@ static void fire(wheelmgr *m,uint64_t tick){
 	while((t = (timer*)dlist_pop(items))){
 		int32_t ret = t->callback(TEVENT_TIMEOUT,t->expire,t->ud);
 		if(ret >= 0 && ret <= MAX_TIMEOUT){
-			if(ret > 0)
-				t->timeout = ret;
+			if(ret > 0) t->timeout = ret;
 			t->expire = tick + t->timeout;
 			_reg(m,t,tick,NULL);
 		}else{
@@ -138,9 +132,8 @@ timer *wheelmgr_register(wheelmgr *m,uint32_t timeout,
 wheelmgr *wheelmgr_new(){
 	wheelmgr *t = calloc(1,sizeof(*t));
 	int i = 0;
-	for(; i < wheel_day+1; ++i){
+	for(; i < wheel_day+1; ++i)
 		t->wheels[i] = wheel_new(i);
-	}
 	return t;
 }
 
