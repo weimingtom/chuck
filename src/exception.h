@@ -1,5 +1,5 @@
 /*
-    Copyright (C) <2014>  <huangweilook@21cn.com>
+    Copyright (C) <2014>  <sniperHW@163.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
