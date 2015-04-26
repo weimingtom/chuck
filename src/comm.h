@@ -42,6 +42,40 @@
 #include    <fcntl.h>
 #include    <stdint.h>
 
+#ifdef _LINUX
+
+#include    <sys/epoll.h>
+
+enum{
+    EVENT_READ  =  EPOLLIN, //| EPOLLERR | EPOLLHUP | EPOLLRDHUP),
+    EVENT_WRITE =  EPOLLOUT,    
+};
+
+#elif _BSD
+
+#include    <sys/event.h>
+
+enum{
+    EVENT_READ  =  EVFILT_READ,
+    EVENT_WRITE =  EVFILT_WRITE,    
+};
+
+#else
+
+#error "un support platform!"   
+
+#endif
+
+typedef struct
+{
+    listnode lnode;
+    struct   iovec *iovec;
+    int32_t  iovec_count;
+}iorequest;
+
+
+typedef struct handle handle;    
+
 #ifndef TEMP_FAILURE_RETRY
 #define TEMP_FAILURE_RETRY(expression)\
     ({ long int __result;\
