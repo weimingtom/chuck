@@ -20,22 +20,16 @@
 #include <stdint.h>
 #include "comm.h"    
 
-
-typedef struct engine engine;
-
 engine *engine_new();
 void    engine_del(engine*);
-int32_t engine_run(engine*);
-void    engine_runonce(engine*,uint32_t timeout);
+int32_t engine_run(engine*,int32_t timeout);
 void    engine_stop(engine*);
-int32_t engine_add(engine*,handle*,void (*)(handle*,void*,int32_t,int32_t));
+int32_t engine_add(engine*,handle*,generic_callback);
 
-/*
-add/del/modify handle events
-*/
 
 int32_t event_add(engine*,handle*,int32_t events);
-int32_t event_del(engine*,handle*);
+int32_t event_remove(engine*,handle*);
+
 int32_t event_enable(engine*,handle*,int32_t events);
 int32_t event_disable(engine*,handle*,int32_t events);
 
@@ -51,11 +45,12 @@ static inline int32_t enable_write(engine *e,handle *h){
     return event_enable(e,h,EVENT_WRITE);
 }
 
-static inline int32_t disable_write(engine_t e,handle *h){
+static inline int32_t disable_write(engine *e,handle *h){
     return event_enable(e,h,EVENT_WRITE);         
 }
 
-//int32_t is_read_enable(handle*h);
-//int32_t is_write_enable(handle*h);
+
+int32_t is_read_enable(handle*h);
+int32_t is_write_enable(handle*h);
     
 #endif
