@@ -295,6 +295,7 @@ enum{
     ESOCKCLOSE = 140,           /*socket close*/
     EUNSPPLAT,                  /*unsupport platform*/
     ENOASSENG,                  /*no associate engine*/
+    EINVISOKTYPE,               /*invaild socket type*/
 };
     
 #endif

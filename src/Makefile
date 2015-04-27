@@ -29,10 +29,12 @@ source =  exception.c\
 		  log.c\
 		  str.c\
 		  mem/obj_allocator.c\
-		  net/socket.c\
-		  net/acceptor.c\
-		  net/connector.c\
-		  net/stream_socket.c\
+		  socket/socket.c\
+		  socket/acceptor.c\
+		  socket/connector.c\
+		  socket/stream_socket.c\
+		  socket/datagram_socket.c\
+		  socket/socket_helper.c\
 		  refobj.c
 
 test-source = test/testexception.c\
