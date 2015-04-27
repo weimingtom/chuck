@@ -25,3 +25,21 @@ void close_socket(handle *h)
 		}
 	}		
 }
+
+int32_t is_read_enable(handle*h){
+#ifdef _LINUX
+	return h->events & EPOLLIN;
+#elif   _BSD
+	return (int32_t)h->set_read;
+#endif
+	return 0;
+}
+
+int32_t is_write_enable(handle*h){
+#ifdef _LINUX
+	return h->events & EPOLLOUT;
+#elif   _BSD
+	return (int32_t)h->set_write;
+#endif
+	return 0;	
+}

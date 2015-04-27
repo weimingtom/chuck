@@ -23,8 +23,8 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <assert.h>
-#include "atomic.h"
-#include "exception.h"  
+#include "util/atomic.h"
+#include "util/exception.h"  
   
 typedef struct
 {

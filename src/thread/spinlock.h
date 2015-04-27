@@ -20,7 +20,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "atomic.h"
+#include "util/atomic.h"
 
 typedef struct
 {

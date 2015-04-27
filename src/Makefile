@@ -19,23 +19,24 @@ ifeq ($(uname_S),FreeBSD)
 endif
 
 
-source =  exception.c\
+source =  util/exception.c\
 		  util/time.c\
 		  util/minheap.c\
 		  util/timewheel.c\
+		  util/log.c\
+		  util/string.c\
+		  util/refobj.c\
 		  thread/thread.c\
 		  thread/spinlock.c\
-		  lua/lua_util.c\
-		  log.c\
-		  str.c\
-		  mem/obj_allocator.c\
 		  socket/socket.c\
 		  socket/acceptor.c\
 		  socket/connector.c\
 		  socket/stream_socket.c\
 		  socket/datagram_socket.c\
 		  socket/socket_helper.c\
-		  refobj.c
+		  engine/engine.c\
+		  lua/lua_util.c\
+		  mem/obj_allocator.c	  
 
 test-source = test/testexception.c\
 			  test/testthread.c\

@@ -22,7 +22,7 @@
 
 engine *engine_new();
 void    engine_del(engine*);
-int32_t engine_run(engine*,int32_t timeout);
+int32_t engine_run(engine*);
 void    engine_stop(engine*);
 int32_t engine_add(engine*,handle*,generic_callback);
 
@@ -49,8 +49,5 @@ static inline int32_t disable_write(engine *e,handle *h){
     return event_enable(e,h,EVENT_WRITE);         
 }
 
-
-int32_t is_read_enable(handle*h);
-int32_t is_write_enable(handle*h);
     
 #endif

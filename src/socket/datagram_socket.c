@@ -1,6 +1,10 @@
 #include <assert.h>
 #include "socket/socket.h"
-#include "engine.h"
+#include "engine/engine.h"
+
+
+extern int32_t is_read_enable(handle*h);
+extern int32_t is_write_enable(handle*h);
 
 static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback){
 	assert(e && h && callback);

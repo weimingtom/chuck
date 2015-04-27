@@ -21,15 +21,15 @@ static void delete_thd_exstack(void  *arg)
 	free(arg);
 }
 
-int setup_sigsegv();
-static void signal_segv(int signum,siginfo_t* info, void*ptr){
+int32_t setup_sigsegv();
+
+static void signal_segv(int32_t signum,siginfo_t* info, void*ptr){
 	exception_throw(except_segv_fault,__FILE__,__FUNCTION__,__LINE__,info);
 }
 
-int setup_sigsegv(){
+int32_t setup_sigsegv(){
 	struct sigaction action;
 	memset(&action, 0, sizeof(action));
-	//sigaddset(&action.sa_mask,SIGINT);
 	action.sa_sigaction = signal_segv;
 	action.sa_flags = SA_SIGINFO;
 	if(sigaction(SIGSEGV, &action, NULL) < 0) {
@@ -39,11 +39,11 @@ int setup_sigsegv(){
 	return 1;
 }
 
-static void signal_sigbus(int signum,siginfo_t* info, void*ptr){
+static void signal_sigbus(int32_t signum,siginfo_t* info, void*ptr){
 	THROW(except_sigbus);
 }
 
-int setup_sigbus(){
+int32_t setup_sigbus(){
 	struct sigaction action;
 	memset(&action, 0, sizeof(action));
 	action.sa_sigaction = signal_sigbus;
@@ -59,7 +59,7 @@ static void signal_sigfpe(int signum,siginfo_t* info, void*ptr){
 	THROW(except_arith);
 }
 
-int setup_sigfpe(){
+int32_t setup_sigfpe(){
 	struct sigaction action;
 	memset(&action, 0, sizeof(action));
 	action.sa_sigaction = signal_sigfpe;
@@ -97,9 +97,11 @@ static inline callstack_frame *get_csf(list *pool)
 	return  (callstack_frame*)list_pop(pool);
 }
 
-static int addr2line(const char *addr,char *output,int size){		
+static int32_t addr2line(const char *addr,char *output,int32_t size){		
 	char path[256]={0};
-	readlink("/proc/self/exe", path, 256);	
+	if(0 >= readlink("/proc/self/exe", path, 256)){
+		return -1;
+	}	
 	char cmd[1024];
 	snprintf(cmd,1024,"addr2line -fCse %s %s", path, addr);
 	FILE *pipe = popen(cmd, "r");
@@ -119,8 +121,8 @@ void exception_throw(int32_t code,const char *file,const char *func,int32_t line
 	void*                   bt[64];
 	char**                  strings;
 	size_t                  sz;
-	int                     i;
-	int                     sig = 0;
+	int32_t                 i;
+	int32_t                 sig = 0;
 	exception_perthd_st		*epst;
 	callstack_frame			*call_frame;
 	exception_frame			*frame = expstack_top();
@@ -186,7 +188,7 @@ void exception_throw(int32_t code,const char *file,const char *func,int32_t line
 		else
     		size += snprintf(ptr,MAX_LOG_SIZE," %s\n",exception_description(code));
 		ptr = logbuf + size;	    		    		
- 		int f = 0;   			
+ 		int32_t f = 0;   			
 		if(code == except_segv_fault || code == except_sigbus || code == except_arith) 
 			i = 3;
 		else{

@@ -24,7 +24,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include "util/list.h"
-#include "log.h"
+#include "util/log.h"
 
 #define MAX_EXCEPTION 4096
 
@@ -103,7 +103,7 @@ static inline void print_call_stack(exception_frame *frame)
     char *ptr = buf;
     int32_t size = 0;
     listnode *node = list_begin(&frame->call_stack);
-    int f = 0;
+    int32_t f = 0;
     if(frame->exception == except_segv_fault)
 	    size += snprintf(ptr,MAX_LOG_SIZE," exception\n %s (invaild access addr:%p)\n",exception_description(frame->exception),frame->addr);
     else
