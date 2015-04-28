@@ -27,6 +27,8 @@ source =  util/exception.c\
 		  util/string.c\
 		  util/refobj.c\
 		  util/timerfd.c\
+		  util/wpacket.c\
+		  util/rpacket.c\
 		  thread/thread.c\
 		  thread/spinlock.c\
 		  socket/socket.c\
