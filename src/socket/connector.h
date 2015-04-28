@@ -20,14 +20,15 @@
 
 #include "comm.h"
 
-//void (*connected_callback)(int32_t fd,int32_t err);    
+//void (*connected_callback)(int32_t fd,int32_t err,void *ud);    
 
 typedef struct{
     handle  base;  
-    void    (*callback)(int32_t fd,int32_t err);
+    void   *ud;
+    void    (*callback)(int32_t fd,int32_t err,void *ud);
 }connector;
 
-handle *connector_new(int32_t fd);    
+handle *connector_new(int32_t fd,void *ud);    
 
 //need not delete,engine will do for you
 

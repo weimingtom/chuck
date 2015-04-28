@@ -58,4 +58,15 @@ static inline int32_t easy_close_on_exec(int32_t fd){
 	return fcntl(fd, F_SETFD, flags|FD_CLOEXEC) == 0 ? 0 : -errno;
 }
 
+static inline int32_t easy_sockaddr_ip4(sockaddr_ *addr,const char *ip,uint16_t port){
+    memset((void*)addr,0,sizeof(*addr));
+    addr->in.sin_family = AF_INET;
+    addr->in.sin_port = htons(port);
+    if(inet_pton(AF_INET,ip,&addr->in.sin_addr) < 0)
+    {
+        return -errno;
+    }
+    return 0;    
+}
+
 #endif

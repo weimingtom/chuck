@@ -1,7 +1,7 @@
 //#define _GNU_SOURCE
 #include <stdio.h>
 #include <signal.h>
-#include "exception.h"
+#include "util/exception.h"
 #include "thread/thread.h"
 
 void func1()

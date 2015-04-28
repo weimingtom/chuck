@@ -3,7 +3,7 @@
 void close_socket(handle *h)
 {
 	socket_ *s = (socket_*)h;
-	if(!s->status & SOCKET_CLOSE){
+	if(!(s->status & SOCKET_CLOSE)){
 		iorequest *req;
 		while((req = (iorequest*)list_pop(&s->pending_send))!=NULL){
 			if(s->status & SOCKET_STREAM)

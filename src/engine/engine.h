@@ -46,7 +46,7 @@ static inline int32_t enable_write(engine *e,handle *h){
 }
 
 static inline int32_t disable_write(engine *e,handle *h){
-    return event_enable(e,h,EVENT_WRITE);         
+    return event_disable(e,h,EVENT_WRITE);         
 }
 
     

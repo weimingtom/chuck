@@ -20,14 +20,15 @@
 
 #include "comm.h"
 
-//typedef void (*accepted_callback)(int32_t fd,sockaddr_*);
+//typedef void (*accepted_callback)(int32_t fd,sockaddr_*,void *ud);
 
 typedef struct{
-    handle  base;  
-    void    (*callback)(int32_t fd,sockaddr_*);
+    handle  base;
+    void   *ud;      
+    void    (*callback)(int32_t fd,sockaddr_*,void *ud);
 }acceptor;    
 
-handle *acceptor_new(int32_t fd);
+handle *acceptor_new(int32_t fd,void *ud);
 void    acceptor_del(handle*);    
 
 

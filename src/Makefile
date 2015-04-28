@@ -1,5 +1,5 @@
 CFLAGS = -g -Wall -fno-strict-aliasing 
-LDFLAGS = -lpthread -lrt -lm -lssl -lcrypto
+LDFLAGS = -lpthread -lrt -lm
 SHARED  = -fPIC
 DEPDIR  = 
 INCLUDE = -I./ -I../deps/lua-5.3.0/src
@@ -40,6 +40,8 @@ source =  util/exception.c\
 
 test-source = test/testexception.c\
 			  test/testthread.c\
+			  test/stream/tcp_echoserver.c\
+			  test/stream/tcp_echoclient.c
 
 release:$(source)
 	$(CC) $(SHARED) -O2 $(CFLAGS) -c $(source) $(INCLUDE) $(DEFINE)
@@ -53,6 +55,8 @@ test:$(test-source)
 	$(CC) $(CFLAGS) -c $(test-source) $(INCLUDE) $(DEFINE)
 	$(CC) $(CFLAGS) -o testexception testexception.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o testthread testthread.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
+	$(CC) $(CFLAGS) -o tcp_echoserver tcp_echoserver.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
+	$(CC) $(CFLAGS) -o tcp_echoclient tcp_echoclient.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 
 clean:
 	rm *.o

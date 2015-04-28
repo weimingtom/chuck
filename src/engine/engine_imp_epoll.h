@@ -59,7 +59,7 @@ int32_t event_disable(engine *e,handle *h,int32_t events){
 
 
 
-engine* new_engine(){
+engine* engine_new(){
 	int32_t epfd = epoll_create1(EPOLL_CLOEXEC);
 	if(epfd < 0) return NULL;
 	int32_t tmp[2];
