@@ -20,6 +20,7 @@ wpacket *wpacket_new(uint16_t size){
 	buffer_writer_init(&w->writer,b,sizeof(*w->len));
 	w->len = (uint16_t*)b->data;
 	w->data_size = sizeof(*w->len);
+	((packet*)w)->buf->size = w->data_size;
 	((packet*)w)->makeforwrite = wpacket_clone;
 	((packet*)w)->makeforread =  wpacket_makeforread;	
 	return w;

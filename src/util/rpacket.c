@@ -86,7 +86,7 @@ packet  *wpacket_makeforread(packet *p){
 		((packet*)r)->buf = p->buf;
 		((packet*)r)->start_pos = p->start_pos;
 		refobj_inc((refobj*)p->buf);
-		buffer_reader_init(&r->reader,p->buf,p->start_pos);
+		buffer_reader_init(&r->reader,p->buf,p->start_pos + sizeof(*ori->len));
 		r->len_total = ori->data_size - sizeof(*ori->len);
 		r->len_remain = r->len_total;
 		((packet*)r)->makeforwrite = rpacket_makeforwrite;

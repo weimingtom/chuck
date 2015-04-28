@@ -39,8 +39,8 @@ typedef struct packet
 }packet;
 
 
-#define packet_makeforwrite(p) ((packet_t)(p))->makeforwrite
-#define packet_makeforread(p) ((packet_t)(p))->makeforread
+#define packet_makeforwrite(p) ((packet*)(p))->makeforwrite(p)
+#define packet_makeforread(p) ((packet*)(p))->makeforread(p)
 
 void packet_del(packet*);
 

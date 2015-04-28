@@ -50,6 +50,7 @@ static inline void wpacket_data_copy(wpacket *w,bytebuffer *buf)
         from  = from->next;
         pos   = 0;
     }
+    buf->size = w->data_size;
 }
 
 static inline void copy_on_write(wpacket *w)
@@ -61,7 +62,8 @@ static inline void copy_on_write(wpacket *w)
     refobj_dec((refobj*)((packet*)w)->buf);
     refobj_inc((refobj*)newbuff);
     ((packet*)w)->buf = newbuff;
-    buffer_writer_init(&w->writer,newbuff,0);
+    //set writer to the end
+    buffer_writer_init(&w->writer,newbuff,w->data_size);
     w->len = (uint16_t*)newbuff->data;
 }
 

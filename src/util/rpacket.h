@@ -70,15 +70,15 @@ static inline uint8_t rpacket_read_uint8(rpacket *r){
 }
 
 static inline uint16_t rpacket_read_uint16(rpacket *r){
-    return _hton16(RPACKET_READ(r,uint16_t));
+    return _ntoh16(RPACKET_READ(r,uint16_t));
 }
 
 static inline uint32_t rpacket_read_uint32(rpacket *r){
-    return _hton32(RPACKET_READ(r,uint32_t));
+    return _ntoh32(RPACKET_READ(r,uint32_t));
 }
 
 static inline uint64_t rpacket_read_uint64(rpacket *r){
-    return _hton64(RPACKET_READ(r,uint64_t));
+    return _ntoh64(RPACKET_READ(r,uint64_t));
 }
 
 static inline double rpacket_read_double(rpacket *r){
@@ -90,15 +90,15 @@ static inline uint8_t rpacket_peek_uint8(rpacket *r){
 }
 
 static inline uint16_t rpacket_peek_uint16(rpacket *r){
-    return _hton16(RPACKET_PEEK(r,uint16_t));
+    return _ntoh16(RPACKET_PEEK(r,uint16_t));
 }
 
 static inline uint32_t rpacket_peek_uint32(rpacket *r){
-    return _hton32(RPACKET_PEEK(r,uint32_t));
+    return _ntoh32(RPACKET_PEEK(r,uint32_t));
 }
 
 static inline uint64_t rpacket_peek_uint64(rpacket *r){
-    return _hton64(RPACKET_PEEK(r,uint64_t));
+    return _ntoh64(RPACKET_PEEK(r,uint64_t));
 }
 
 static inline double rpacket_peek_double(rpacket *r){
