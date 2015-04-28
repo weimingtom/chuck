@@ -33,7 +33,7 @@ int32_t event_add(engine *e,handle *h,int32_t events){
 
 int32_t event_del(engine *e,handle *h){
 	struct kevent ke;
-	kn_kqueue *kq = (kn_kqueue*)e;
+	kqueue_ *kq = (kqueue_*)e;
 	EV_SET(&ke, h->fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 	kevent(kq->kfd, &ke, 1, NULL, 0, NULL);
 	EV_SET(&ke, h->fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
@@ -42,9 +42,9 @@ int32_t event_del(engine *e,handle *h){
 	return 0;	
 }
 
-int32_t event_enable(engine *e,handle *h,int32_t events){
+int32_t event_enable(handle *h,int32_t events){
 	struct kevent ke;
-	kn_kqueue *kq = (kn_kqueue*)e;
+	kqueue_ *kq = (kqueue_*)h->e;
 	EV_SET(&ke, h->fd, events,EV_ENABLE, 0, 0, h);
 	errno = 0;
 	if(0 != kevent(kq->kfd, &ke, 1, NULL, 0, NULL))
@@ -56,9 +56,9 @@ int32_t event_enable(engine *e,handle *h,int32_t events){
 	return 0;
 }
 
-int32_t event_disable(engine *e,handle *h,int32_t events){
+int32_t event_disable(handle *h,int32_t events){
 	struct kevent ke;
-	kn_kqueue *kq = (kn_kqueue*)e;
+	kqueue_ *kq = (kqueue_*)h->e;
 	EV_SET(&ke, h->fd, events,EV_DISABLE, 0, 0, h);
 	errno = 0;
 	if(0 != kevent(kq->kfd, &ke, 1, NULL, 0, NULL))

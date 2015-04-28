@@ -33,7 +33,7 @@ void session_send(struct session *s,int32_t size)
 
 int      client_count = 0;
 double   totalbytes   = 0;
-uint64_t last_tick    = 0; 
+
 
 void transfer_finish(handle *h,void *_,int32_t bytestransfer,int32_t err){
 	if(err == ESOCKCLOSE) return;
@@ -52,16 +52,6 @@ void transfer_finish(handle *h,void *_,int32_t bytestransfer,int32_t err){
     else if(req == &s->recv_overlap){
 		session_send(s,bytestransfer);
 		totalbytes += bytestransfer;
-	}
-
-	if(last_tick > 0){
-		uint64_t now = systick64();
-		double elapse = now - last_tick;
-		if(elapse > 1000.0){
-			printf("client_count:%d,totalbytes:%f MB/s\n",client_count,totalbytes/1024/1024);
-			last_tick = now;
-			totalbytes = 0.0;
-		}
 	}
 }
 

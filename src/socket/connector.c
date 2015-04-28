@@ -5,6 +5,7 @@
 static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback)
 {
 	assert(e && h && callback);
+	if(h->e) return -EASSENG;
 	int32_t ret;
 #ifdef _LINUX			
 	ret = event_add(e,h,EVENT_READ | EVENT_WRITE);

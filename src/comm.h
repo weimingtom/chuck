@@ -296,6 +296,7 @@ enum{
     EUNSPPLAT,                  /*unsupport platform*/
     ENOASSENG,                  /*no associate engine*/
     EINVISOKTYPE,               /*invaild socket type*/
+    EASSENG,                    /*already associate*/
 };
     
 #endif

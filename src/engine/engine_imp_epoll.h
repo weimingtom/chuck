@@ -35,10 +35,10 @@ int32_t event_remove(engine *e,handle *h){
 	return 0;	
 }
 
-int32_t event_mod(engine *e,handle *h,int32_t events){
+int32_t event_mod(handle *h,int32_t events){
 	assert((events & EPOLLET) == 0);	
 	struct epoll_event ev = {0};
-	epoll_ *ep = (epoll_*)e;
+	epoll_ *ep = (epoll_*)h->e;
 	ev.data.ptr = h;
 	ev.events = events;
 	errno = 0;
@@ -49,12 +49,12 @@ int32_t event_mod(engine *e,handle *h,int32_t events){
 }
 
 
-int32_t event_enable(engine *e,handle *h,int32_t events){
-	return event_mod(e,h,h->events | events);
+int32_t event_enable(handle *h,int32_t events){
+	return event_mod(h,h->events | events);
 }
 
-int32_t event_disable(engine *e,handle *h,int32_t events){
-	return event_mod(e,h,h->events & (~events));
+int32_t event_disable(handle *h,int32_t events){
+	return event_mod(h,h->events & (~events));
 }
 
 
@@ -135,7 +135,6 @@ void engine_stop(engine *e){
 	int32_t _;
 	TEMP_FAILURE_RETRY(write(ep->notifyfds[1],&_,sizeof(_)));
 }
-
 
 /*kn_timer_t kn_reg_timer(engine_t e,uint64_t timeout,int32_t(*cb)(uint32_t,void*),void *ud){
 	kn_epoll *ep = (kn_epoll*)e;

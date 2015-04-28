@@ -62,11 +62,9 @@ static inline int32_t easy_sockaddr_ip4(sockaddr_ *addr,const char *ip,uint16_t 
     memset((void*)addr,0,sizeof(*addr));
     addr->in.sin_family = AF_INET;
     addr->in.sin_port = htons(port);
-    if(inet_pton(AF_INET,ip,&addr->in.sin_addr) < 0)
-    {
-        return -errno;
-    }
-    return 0;    
+    if(inet_pton(AF_INET,ip,&addr->in.sin_addr) == 1)
+        return 0;
+    return -1;
 }
 
 #endif

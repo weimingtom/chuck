@@ -26,6 +26,7 @@ source =  util/exception.c\
 		  util/log.c\
 		  util/string.c\
 		  util/refobj.c\
+		  util/timerfd.c\
 		  thread/thread.c\
 		  thread/spinlock.c\
 		  socket/socket.c\

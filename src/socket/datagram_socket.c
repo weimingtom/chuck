@@ -8,19 +8,19 @@ extern int32_t is_write_enable(handle*h);
 
 static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback){
 	assert(e && h && callback);
+	if(h->e) return -EASSENG;
 	int32_t ret;
 #ifdef _LINUX
 	if(0 == (ret = event_add(e,h,EPOLLIN)))
-		disable_read(e,h);	
+		disable_read(h);	
 #elif   _BSD
 	if(0 == (ret = event_add(e,h,EVFILT_READ)))
-		disable_read(e,h);
+		disable_read(h);
 #else
 	return -EUNSPPLAT;
 #endif
 	if(ret == 0){
 		((socket_*)h)->datagram_callback = (void(*)(handle*,void*,int32_t,int32_t,int32_t))callback;
-		h->e = e;
 	}
 	return ret;
 }
@@ -53,7 +53,7 @@ static void process_read(socket_ *s){
 	}	
 	if(!list_size(&s->pending_recv)){
 		//没有接收请求了,取消EPOLLIN
-		disable_read(((handle*)s)->e,(handle*)s);
+		disable_read((handle*)s);
 	}
 }
 
@@ -78,7 +78,7 @@ static void process_write(socket_ *s){
 			return;			
 	}	
 	if(!list_size(&s->pending_send)){
-		disable_write(((handle*)s)->e,(handle*)s);
+		disable_write((handle*)s);
 	}			
 }
 
@@ -141,7 +141,7 @@ int32_t datagram_socket_recv(handle *h,iorequest *req,int32_t flag,int32_t *recv
 			return -errno;
 	}
 	list_pushback(&s->pending_recv,(listnode*)req);
-	if(!is_read_enable(h)) enable_read(h->e,h);
+	if(!is_read_enable(h)) enable_read(h);
 	return -EAGAIN;	
 }
 
@@ -171,6 +171,6 @@ int32_t datagram_socket_send(handle *h,iorequest *req,int32_t flag){
 			return -errno;
 	}
 	list_pushback(&s->pending_send,(listnode*)req);
-	if(!is_write_enable(h)) enable_write(h->e,h);
+	if(!is_write_enable(h)) enable_write(h);
 	return -EAGAIN;	
 }

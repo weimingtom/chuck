@@ -25,28 +25,29 @@ void    engine_del(engine*);
 int32_t engine_run(engine*);
 void    engine_stop(engine*);
 int32_t engine_add(engine*,handle*,generic_callback);
+int32_t engine_remove(handle*);
 
-
+//private function
 int32_t event_add(engine*,handle*,int32_t events);
 int32_t event_remove(engine*,handle*);
 
-int32_t event_enable(engine*,handle*,int32_t events);
-int32_t event_disable(engine*,handle*,int32_t events);
+int32_t event_enable(handle*,int32_t events);
+int32_t event_disable(handle*,int32_t events);
 
-static inline int32_t enable_read(engine *e,handle *h){    
-    return event_enable(e,h,EVENT_READ);
+static inline int32_t enable_read(handle *h){    
+    return event_enable(h,EVENT_READ);
 }
 
-static inline int32_t disable_read(engine *e,handle *h){
-    return event_disable(e,h,EVENT_READ);
+static inline int32_t disable_read(handle *h){
+    return event_disable(h,EVENT_READ);
 }
 
-static inline int32_t enable_write(engine *e,handle *h){   
-    return event_enable(e,h,EVENT_WRITE);
+static inline int32_t enable_write(handle *h){   
+    return event_enable(h,EVENT_WRITE);
 }
 
-static inline int32_t disable_write(engine *e,handle *h){
-    return event_disable(e,h,EVENT_WRITE);         
+static inline int32_t disable_write(handle *h){
+    return event_disable(h,EVENT_WRITE);         
 }
 
     
