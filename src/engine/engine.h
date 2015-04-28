@@ -29,7 +29,7 @@ int32_t engine_remove(handle*);
 
 //private function
 int32_t event_add(engine*,handle*,int32_t events);
-int32_t event_remove(engine*,handle*);
+int32_t event_remove(handle*);
 
 int32_t event_enable(handle*,int32_t events);
 int32_t event_disable(handle*,int32_t events);

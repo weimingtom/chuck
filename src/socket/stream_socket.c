@@ -16,8 +16,8 @@ static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback){
 	   (ret = event_add(e,h,EVFILT_READ)) == 0){
 		disable_read(h);
 		disable_write(h)
-	}else{
-		event_remove(e,h);
+	}else if(h->e){
+		event_remove(h);
 	}
 #else
 	return -EUNSPPLAT;

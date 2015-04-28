@@ -27,18 +27,19 @@ int32_t event_add(engine *e,handle *h,int32_t events){
 		h->set_read = 1;
 	else if(events == EVFILT_WRITE)
 		h->set_write = 1;
-	
+	h->e = e;
 	return 0;	
 }
 
-int32_t event_del(engine *e,handle *h){
+int32_t event_remove(handle *h){
 	struct kevent ke;
-	kqueue_ *kq = (kqueue_*)e;
+	kqueue_ *kq = (kqueue_*)h->e;
 	EV_SET(&ke, h->fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 	kevent(kq->kfd, &ke, 1, NULL, 0, NULL);
 	EV_SET(&ke, h->fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
 	kevent(kq->kfd, &ke, 1, NULL, 0, NULL);
-	h->events = 0;	
+	h->events = 0;
+	h->e = NULL;	
 	return 0;	
 }
 

@@ -42,7 +42,9 @@ source =  util/exception.c\
 test-source = test/testexception.c\
 			  test/testthread.c\
 			  test/stream/tcp_echoserver.c\
-			  test/stream/tcp_echoclient.c
+			  test/stream/tcp_echoclient.c\
+			  test/datagram/udp_echoserver.c\
+			  test/datagram/udp_echoclient.c
 
 release:$(source)
 	$(CC) $(SHARED) -O2 $(CFLAGS) -c $(source) $(INCLUDE) $(DEFINE)
@@ -58,7 +60,8 @@ test:$(test-source)
 	$(CC) $(CFLAGS) -o testthread testthread.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o tcp_echoserver tcp_echoserver.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o tcp_echoclient tcp_echoclient.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
-
+	$(CC) $(CFLAGS) -o udp_echoserver udp_echoserver.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
+	$(CC) $(CFLAGS) -o udp_echoclient udp_echoclient.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 clean:
 	rm *.o
 	rm *.a	

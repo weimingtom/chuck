@@ -21,17 +21,19 @@ int32_t event_add(engine *e,handle *h,int32_t events){
 	if(0 != epoll_ctl(ep->epfd,EPOLL_CTL_ADD,h->fd,&ev)) 
 		return -errno;
 	h->events = events;
+	h->e = e;
 	return 0;
 }
 
 
-int32_t event_remove(engine *e,handle *h){
-	epoll_ *ep = (epoll_*)e;
+int32_t event_remove(handle *h){
+	epoll_ *ep = (epoll_*)h->e;
 	struct epoll_event ev = {0};
 	errno = 0;
 	if(0 != epoll_ctl(ep->epfd,EPOLL_CTL_DEL,h->fd,&ev)) 
 		return -errno; 
 	h->events = 0;
+	h->e = NULL;
 	return 0;	
 }
 

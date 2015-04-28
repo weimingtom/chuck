@@ -25,6 +25,9 @@ int32_t easy_listen(int32_t fd,sockaddr_ *server);
 
 int32_t easy_connect(int32_t fd,sockaddr_ *server,sockaddr_ *local);
 
+static inline int32_t easy_bind(int32_t fd,sockaddr_ *addr){
+    return bind(fd,(struct sockaddr*)addr,sizeof(*addr));
+}
 
 static inline int32_t easy_addr_reuse(int32_t fd,int32_t yes){
 	errno = 0;
@@ -54,7 +57,6 @@ static inline int32_t easy_close_on_exec(int32_t fd){
 	if((flags = fcntl(fd, F_GETFL, 0)) < 0){
     	return -errno;
 	}
-
 	return fcntl(fd, F_SETFD, flags|FD_CLOEXEC) == 0 ? 0 : -errno;
 }
 
@@ -65,6 +67,13 @@ static inline int32_t easy_sockaddr_ip4(sockaddr_ *addr,const char *ip,uint16_t 
     if(inet_pton(AF_INET,ip,&addr->in.sin_addr) == 1)
         return 0;
     return -1;
+}
+
+static inline int32_t easy_sockaddr_un(sockaddr_ *addr,const char *path){
+    memset((void*)addr,0,sizeof(*addr));
+    addr->un.sun_family = AF_LOCAL;
+    strncpy(addr->un.sun_path,path,sizeof(addr->un.sun_path)-1);
+    return 0;
 }
 
 #endif

@@ -50,7 +50,7 @@ static void process_connect(handle *h,int32_t events){
 		fd = h->fd;
 	}while(0);    
 	if(fd != -1){
-		event_remove(h->e,h);
+		event_remove(h);
 		((connector*)h)->callback(fd,0,((connector*)h)->ud);
 	}else{
 		close(h->fd);
