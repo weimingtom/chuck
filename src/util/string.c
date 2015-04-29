@@ -100,6 +100,19 @@ string *string_new(const char *str)
 	return _str;
 }
 
+string* string_copy_new(string *oth)
+{
+	string *str = calloc(1,sizeof(*str));
+	if(!oth->holder){
+		strncpy(str->str,oth->str,oth->len);
+		str->len = oth->len;
+	}else{
+		holder_acquire(oth->holder);		
+		str->holder = oth->holder;
+	}
+	return str;
+}
+
 void string_del(string *s)
 {
 	if(s->holder){
