@@ -33,7 +33,7 @@ const void *rpacket_read_binary(rpacket *r,uint16_t *len){
 	uint16_t size = rpacket_read_uint16(r);
 	if(size == 0 || size > r->data_remain) return NULL;
 	if(len) *len = size;
-	if(reader_check_size(&r->reader,sizeof(int16_t))){
+	if(reader_check_size(&r->reader,size)){
 		addr = &r->reader.cur->data[r->reader.pos];
 		r->reader.pos += size;
 		r->data_remain -= size;
@@ -96,6 +96,3 @@ packet  *wpacket_makeread(packet *p){
 	}
 	return NULL;
 }
-
-
-
