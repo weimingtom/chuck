@@ -1,14 +1,17 @@
 #include <assert.h>
 #include "socket/acceptor.h"
 #include "engine/engine.h"
+#include "socket/socket_helper.h"
 
 static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback)
 {
 	assert(e && h && callback);
 	if(h->e) return -EASSENG;
 	int32_t ret = event_add(e,h,EVENT_READ);
-	if(ret == 0)
+	if(ret == 0){
+		easy_noblock(h->fd,1);
 		((acceptor*)h)->callback = (void (*)(int32_t fd,sockaddr_*,void*))callback;
+	}
 	return ret;
 }
 

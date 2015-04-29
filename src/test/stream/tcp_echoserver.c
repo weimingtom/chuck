@@ -15,7 +15,6 @@ static void timer_callback(void *ud){
 static void on_connection(int32_t fd,sockaddr_ *_,void *ud){
 	printf("on_connection\n");
 	engine *e = (engine*)ud;
-	easy_noblock(fd,1);
 	handle *h = new_stream_socket(fd);
 	engine_add(e,h,(generic_callback)transfer_finish);
 	struct session *s = session_new(h);
@@ -34,7 +33,6 @@ int main(int argc,char **argv){
 	}
 	int32_t fd = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 	easy_addr_reuse(fd,1);
-	easy_noblock(fd,1);
 	if(0 == easy_listen(fd,&server)){
 		handle *accptor = acceptor_new(fd,e);
 		engine_add(e,accptor,(generic_callback)on_connection);

@@ -46,7 +46,6 @@ int main(int argc,char **argv){
 		printf("invaild address:%s\n",argv[1]);
 	}
 	int32_t fd = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
-	easy_noblock(fd,1);
 	handle *udpclient = new_datagram_socket(fd); 
 	engine_add(e,udpclient,(generic_callback)datagram_callback);
 	iorequest *req = (iorequest*)new_request(1);

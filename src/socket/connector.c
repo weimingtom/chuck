@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "socket/connector.h"
 #include "engine/engine.h"
+#include "socket/socket_helper.h"
 
 static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback)
 {
@@ -20,6 +21,7 @@ static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback)
 		return -EUNSPPLAT;
 #endif
 	if(ret == 0){
+		easy_noblock(h->fd,1);
 		h->e = e;
 		((connector*)h)->callback = (void (*)(int32_t fd,int32_t err,void*))callback;	
 	}

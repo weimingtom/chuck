@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "socket/socket.h"
 #include "engine/engine.h"
+#include "socket/socket_helper.h"
 
 
 extern int32_t is_read_enable(handle*h);
@@ -20,6 +21,7 @@ static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback){
 	return -EUNSPPLAT;
 #endif
 	if(ret == 0){
+		easy_noblock(h->fd,1);
 		((socket_*)h)->datagram_callback = (void(*)(handle*,void*,int32_t,int32_t,int32_t))callback;
 	}
 	return ret;
