@@ -31,16 +31,21 @@ enum{
 typedef struct packet
 {
     listnode    node;   
-    bytebuffer* buf;
-    struct packet*  (*makeforwrite)(struct packet*);
-    struct packet*  (*makeforread)(struct packet*);        
-    uint16_t    start_pos;
-    uint8_t     type; 
+    bytebuffer* head;        //head or buff list
+    struct packet*  (*construct_write)(struct packet*);
+    struct packet*  (*construct_read)(struct packet*);
+    uint16_t    len_packet;  //total size of packet in bytes        
+    uint16_t    spos;        //start pos in head 
+    uint8_t     type;      
 }packet;
 
+#define TYPE_HEAD uint16_t
 
-#define packet_makeforwrite(p) ((packet*)(p))->makeforwrite(p)
-#define packet_makeforread(p) ((packet*)(p))->makeforread(p)
+#define SIZE_HEAD sizeof(TYPE_HEAD)
+
+
+#define make_writepacket(p) ((packet*)(p))->construct_write(p)
+#define make_readpacket(p) ((packet*)(p))->construct_read(p)
 
 void packet_del(packet*);
 

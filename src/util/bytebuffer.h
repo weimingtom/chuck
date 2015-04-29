@@ -32,6 +32,7 @@ typedef struct bytebuffer{
 
 static inline void bytebuffer_dctor(void *_)
 {
+	printf("bytebuffer_dctor\n");
 	bytebuffer *b = (bytebuffer*)_;
 	if(b->next)
 		refobj_dec((refobj*)b->next);
@@ -40,6 +41,7 @@ static inline void bytebuffer_dctor(void *_)
 
 static inline bytebuffer *bytebuffer_new(uint32_t capacity)
 {
+	printf("bytebuffer_new\n");
 	uint32_t size = sizeof(bytebuffer) + capacity;
     bytebuffer *b = (bytebuffer*)calloc(1,size);
 	if(b){   
@@ -80,20 +82,20 @@ static inline int32_t reader_check_size(buffer_reader *reader,uint32_t size){
 static inline uint32_t buffer_read(buffer_reader *reader,char *out,uint32_t size){
 	uint32_t copy_size;
 	uint32_t out_size = 0;
-	while(size){
-		bytebuffer *b = reader->cur;		
-        if(!b) return out_size;
-        if(reader->pos >= b->size) return out_size;
+	bytebuffer *b = reader->cur;
+	while(b && size){
         copy_size = b->size - reader->pos;
-		copy_size = copy_size > size ? size : copy_size;
-		memcpy(out,b->data + reader->pos,copy_size);
-		size -= copy_size;
-		reader->pos += copy_size;
-		out += copy_size;
-		out_size += copy_size;
-		if(reader->pos >= b->size){
+		if(copy_size > 0){
+			copy_size = copy_size > size ? size : copy_size;
+			memcpy(out,b->data + reader->pos,copy_size);
+			size -= copy_size;
+			reader->pos += copy_size;
+			out += copy_size;
+			out_size += copy_size;
+		}
+		if(b->next && reader->pos >= b->size){
 			reader->pos = 0;
-			reader->cur = b->next;
+			b = reader->cur = b->next;
 		}
 	}
 	return out_size;
@@ -102,21 +104,23 @@ static inline uint32_t buffer_read(buffer_reader *reader,char *out,uint32_t size
 static inline uint32_t buffer_write(buffer_writer *writer,char *in,uint32_t size){
     uint32_t copy_size;
     uint32_t in_size = 0;
-    while(size){
-    	bytebuffer *b = writer->cur;
-        if(!b) return in_size;
-        if(writer->pos >= b->cap) return in_size;
+    bytebuffer *b = writer->cur;
+    while(b && size){
         copy_size = b->cap - writer->pos;
-        copy_size = copy_size > size ? size : copy_size;
-        memcpy(b->data + writer->pos,in,copy_size);
-        size -= copy_size;
-        writer->pos += copy_size;
-        in += copy_size;
-        in_size += copy_size;
-        if(writer->pos >= b->cap){
+        if(copy_size > 0){
+	        copy_size = copy_size > size ? size : copy_size;
+	        memcpy(b->data + writer->pos,in,copy_size);
+	        size -= copy_size;
+	        b->size += copy_size;
+	        writer->pos += copy_size;
+	        in += copy_size;
+	        in_size += copy_size;
+    	}
+        if(b->next && writer->pos >= b->cap){
             writer->pos = 0;
-            writer->cur = b->next;
-        }
+            b = writer->cur = b->next;
+        }else
+        	break;
     }
     return in_size;
 }

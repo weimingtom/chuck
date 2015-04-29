@@ -27,25 +27,25 @@ extern allocator* g_rpk_allocator;
 typedef struct{
     packet          base;
     buffer_reader   reader;
-    uint16_t        len_total;
-    uint16_t        len_remain; 
+    uint16_t        data_remain; 
     //for corssing buffer binary data read
     bytebuffer     *binbuf;
     uint16_t        binpos;
 }rpacket;
 
-rpacket *rpacket_new(bytebuffer*,uint32_t start_pos);
+//will add reference count of b
+rpacket *rpacket_new(bytebuffer *b,uint32_t start_pos);
 
 static inline uint16_t rpacket_read(rpacket *r,char *out,uint16_t size){
-    if(size > r->len_remain) return 0;
+    if(size > r->data_remain) return 0;
     uint16_t out_size = buffer_read(&r->reader,out,(uint16_t)size);
     assert(out_size == size);
-    r->len_remain -= out_size;
+    r->data_remain -= out_size;
     return out_size;
 }
 
 static inline uint16_t rpacket_peek(rpacket *r,char *out,uint16_t size){
-    if(size > r->len_remain) return 0;
+    if(size > r->data_remain) return 0;
     bytebuffer *back1 = r->reader.cur;
     uint32_t    back2 = r->reader.pos;
     uint16_t out_size = (uint16_t)buffer_read(&r->reader,out,(uint16_t)size);

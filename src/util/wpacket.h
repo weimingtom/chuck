@@ -27,8 +27,7 @@ typedef struct
 {
     packet          base;
     buffer_writer   writer;
-    uint16_t        data_size;
-    uint16_t       *len;
+    TYPE_HEAD      *len;
 }wpacket;
 
 
@@ -38,9 +37,9 @@ wpacket *wpacket_new(uint16_t size);
 static inline void wpacket_data_copy(wpacket *w,bytebuffer *buf)
 {
     char *ptr = buf->data;
-    bytebuffer *from = ((packet*)w)->buf;
-    uint16_t    pos  = ((packet*)w)->start_pos; 
-    uint16_t    size = w->data_size; 
+    bytebuffer *from = ((packet*)w)->head;
+    uint16_t    pos  = ((packet*)w)->spos; 
+    uint16_t    size = ((packet*)w)->len_packet; 
     while(size){
         uint16_t copy_size = from->size - pos;
         if(copy_size > size) copy_size = size;
@@ -50,20 +49,19 @@ static inline void wpacket_data_copy(wpacket *w,bytebuffer *buf)
         from  = from->next;
         pos   = 0;
     }
-    buf->size = w->data_size;
+    buf->size = ((packet*)w)->len_packet;
 }
 
 static inline void copy_on_write(wpacket *w)
 {
-    uint32_t size = size_of_pow2(w->data_size);
+    uint32_t size = size_of_pow2(((packet*)w)->len_packet);
     if(size < 64) size = 64;
     bytebuffer *newbuff = bytebuffer_new(size);
     wpacket_data_copy(w,newbuff);
-    refobj_dec((refobj*)((packet*)w)->buf);
-    refobj_inc((refobj*)newbuff);
-    ((packet*)w)->buf = newbuff;
+    refobj_dec((refobj*)((packet*)w)->head);
+    ((packet*)w)->head = newbuff;
     //set writer to the end
-    buffer_writer_init(&w->writer,newbuff,w->data_size);
+    buffer_writer_init(&w->writer,newbuff,((packet*)w)->len_packet);
     w->len = (uint16_t*)newbuff->data;
 }
 
@@ -78,33 +76,24 @@ static inline void wpacket_expand(wpacket *w,uint16_t size)
 
 static inline void wpacket_write(wpacket *w,char *in,uint16_t size)
 {
-    uint16_t packet_len = w->data_size;
+    uint16_t packet_len = ((packet*)w)->len_packet;
     uint16_t new_size = packet_len + size;
     assert(new_size > packet_len);
     if(new_size < packet_len){
         return;
     }
-
-    uint16_t copy_size;
     if(!w->writer.cur)
         copy_on_write(w);
-
-    while(size)
-    {
-        copy_size = w->writer.cur->cap - w->writer.pos;
-        if(copy_size == 0)
-        {
+    do{
+        uint16_t ret;
+        if(!w->writer.cur || 0 == (ret = (uint16_t)buffer_write(&w->writer,in,(uint32_t)size)))
             wpacket_expand(w,size);
-            copy_size = w->writer.cur->cap - w->writer.pos;
+        else{
+            in += ret;
+            size -= ret;
         }
-        copy_size = copy_size > size ? size:copy_size;
-        memcpy(w->writer.cur->data + w->writer.pos,in,copy_size);
-        w->writer.pos += copy_size;    
-        in += copy_size;
-        size -= copy_size;
-        ((packet*)w)->buf->size += copy_size;
-    }
-    w->data_size = new_size;
+    }while(size);
+    ((packet*)w)->len_packet = new_size;
     *w->len = _hton16(new_size - sizeof(*w->len)); 
 }
 

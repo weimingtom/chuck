@@ -29,6 +29,7 @@ source =  util/exception.c\
 		  util/timerfd.c\
 		  util/wpacket.c\
 		  util/rpacket.c\
+		  util/packet.c\
 		  thread/thread.c\
 		  thread/spinlock.c\
 		  socket/socket.c\
