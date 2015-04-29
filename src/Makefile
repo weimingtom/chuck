@@ -27,10 +27,10 @@ source =  util/exception.c\
 		  util/string.c\
 		  util/refobj.c\
 		  util/timerfd.c\
-		  util/wpacket.c\
-		  util/rpacket.c\
-		  util/packet.c\
-		  util/rawpacket.c\
+		  packet/wpacket.c\
+		  packet/rpacket.c\
+		  packet/packet.c\
+		  packet/rawpacket.c\
 		  thread/thread.c\
 		  thread/spinlock.c\
 		  socket/socket.c\

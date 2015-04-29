@@ -1,6 +1,6 @@
-#include "util/wpacket.h"
-#include "util/rpacket.h"
-#include "util/rawpacket.h"
+#include "packet/wpacket.h"
+#include "packet/rpacket.h"
+#include "packet/rawpacket.h"
 
 int main(){
 	wpacket *w1 = wpacket_new(64);

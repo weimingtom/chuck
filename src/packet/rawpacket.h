@@ -1,7 +1,7 @@
 #ifndef _RAWPACKET_H
 #define _RAWPACKET_H
 
-#include "util/packet.h"
+#include "packet/packet.h"
 #include "mem/allocator.h"
 #include "util/endian.h"
 

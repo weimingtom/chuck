@@ -1,6 +1,6 @@
-#include "util/packet.h"
-#include "util/wpacket.h"
-#include "util/rpacket.h"
+#include "packet/packet.h"
+#include "packet/wpacket.h"
+#include "packet/rpacket.h"
 
 void packet_del(packet *p){
 	if(p->type == RPACKET && ((rpacket*)p)->binbuf)

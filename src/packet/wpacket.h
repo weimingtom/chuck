@@ -19,7 +19,7 @@
 #define _WPACKET_H
 
 #include <stdarg.h>
-#include "util/packet.h"
+#include "packet/packet.h"
 #include "mem/allocator.h"
 #include "util/endian.h"
 

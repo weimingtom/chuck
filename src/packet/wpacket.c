@@ -1,5 +1,5 @@
-#include "util/wpacket.h"
-#include "util/rpacket.h"
+#include "packet/wpacket.h"
+#include "packet/rpacket.h"
 
 allocator *g_wpk_allocator = NULL;
 

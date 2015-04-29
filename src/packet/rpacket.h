@@ -18,7 +18,7 @@
 #ifndef _RPACKET_H
 #define _RPACKET_H
 
-#include "util/packet.h"
+#include "packet/packet.h"
 #include "mem/allocator.h"
 #include "util/endian.h"    
 
