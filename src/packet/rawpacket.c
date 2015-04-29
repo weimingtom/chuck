@@ -12,7 +12,7 @@ static packet *rawpacket_clone(packet*);
 
 rawpacket *rawpacket_new(uint32_t size){
 	size = size_of_pow2(size);
-    if(size < 64) size = 64;
+    if(size < MIN_BUFFER_SIZE) size = MIN_BUFFER_SIZE;
     bytebuffer *b = bytebuffer_new(size);
 	rawpacket *raw = (rawpacket*)CALLOC(g_rawpk_allocator,1,sizeof(*raw));
 	((packet*)raw)->type = RAWPACKET;

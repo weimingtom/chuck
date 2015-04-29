@@ -16,7 +16,7 @@ packet        *rpacket_makewrite(packet*);
 
 wpacket *wpacket_new(uint16_t size){
 	size = size_of_pow2(size);
-    if(size < 64) size = 64;
+    if(size < MIN_BUFFER_SIZE) size = MIN_BUFFER_SIZE;
     bytebuffer *b = bytebuffer_new(size);
 
 	wpacket *w = (wpacket*)CALLOC(g_wpk_allocator,1,sizeof(*w));

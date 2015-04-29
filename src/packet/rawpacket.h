@@ -1,3 +1,20 @@
+/*
+    Copyright (C) <2015>  <sniperHW@163.com>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef _RAWPACKET_H
 #define _RAWPACKET_H
 
@@ -22,7 +39,7 @@ static inline void rawpacket_expand(rawpacket *raw,uint32_t newsize)
 {
 
 	newsize = size_of_pow2(newsize);
-    if(newsize < 64) newsize = 64;
+    if(newsize < MIN_BUFFER_SIZE) newsize = MIN_BUFFER_SIZE;
     bytebuffer *newbuff = bytebuffer_new(newsize);
    	bytebuffer *oldbuff = ((packet*)raw)->head;
    	memcpy(newbuff->data,oldbuff->data,oldbuff->size);

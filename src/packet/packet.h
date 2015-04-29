@@ -43,6 +43,8 @@ typedef struct packet
 
 #define SIZE_HEAD sizeof(TYPE_HEAD)
 
+#define MIN_BUFFER_SIZE 64
+
 
 #define make_writepacket(p) ((packet*)(p))->construct_write((packet*)(p))
 #define make_readpacket(p) ((packet*)(p))->construct_read((packet*)(p))

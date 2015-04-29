@@ -58,7 +58,7 @@ static inline void wpacket_data_copy(wpacket *w,bytebuffer *buf)
 static inline void wpacket_copy_on_write(wpacket *w)
 {
     uint32_t size = size_of_pow2(((packet*)w)->len_packet);
-    if(size < 64) size = 64;
+    if(size < MIN_BUFFER_SIZE) size = MIN_BUFFER_SIZE;
     bytebuffer *newbuff = bytebuffer_new(size);
     wpacket_data_copy(w,newbuff);
     refobj_dec((refobj*)((packet*)w)->head);
@@ -72,7 +72,7 @@ static inline void wpacket_copy_on_write(wpacket *w)
 static inline void wpacket_expand(wpacket *w,uint16_t size)
 {
     size = size_of_pow2(size);
-    if(size < 64) size = 64;
+    if(size < MIN_BUFFER_SIZE) size = MIN_BUFFER_SIZE;
     w->writer.cur->next = bytebuffer_new(size);
     buffer_writer_init(&w->writer,w->writer.cur->next,0);
 }
