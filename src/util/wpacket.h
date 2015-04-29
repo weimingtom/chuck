@@ -40,7 +40,7 @@ static inline void wpacket_data_copy(wpacket *w,bytebuffer *buf)
     bytebuffer *from = ((packet*)w)->head;
     uint16_t    pos  = ((packet*)w)->spos; 
     uint16_t    size = ((packet*)w)->len_packet; 
-    while(size){
+    do{
         uint16_t copy_size = from->size - pos;
         if(copy_size > size) copy_size = size;
         memcpy(ptr,from->data+pos,copy_size);
@@ -48,7 +48,7 @@ static inline void wpacket_data_copy(wpacket *w,bytebuffer *buf)
         ptr  += copy_size;
         from  = from->next;
         pos   = 0;
-    }
+    }while(size);
     buf->size = ((packet*)w)->len_packet;
 }
 
