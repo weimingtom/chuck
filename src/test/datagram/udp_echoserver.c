@@ -56,7 +56,6 @@ int main(int argc,char **argv){
 	}
 	int32_t fd = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 	easy_addr_reuse(fd,1);
-	easy_noblock(fd,1);
 	if(0 == easy_bind(fd,&server)){
 		handle *udpserver = new_datagram_socket(fd); 
 		engine_add(e,udpserver,(generic_callback)datagram_callback);

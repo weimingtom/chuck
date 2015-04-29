@@ -18,10 +18,13 @@
 #ifndef _WPACKET_H
 #define _WPACKET_H
 
+#include <stdarg.h>
 #include "util/packet.h"
 #include "mem/allocator.h"
 #include "util/endian.h"
 
+
+extern allocator* g_wpk_allocator;
 
 typedef struct
 {
@@ -52,7 +55,7 @@ static inline void wpacket_data_copy(wpacket *w,bytebuffer *buf)
     buf->size = ((packet*)w)->len_packet;
 }
 
-static inline void copy_on_write(wpacket *w)
+static inline void wpacket_copy_on_write(wpacket *w)
 {
     uint32_t size = size_of_pow2(((packet*)w)->len_packet);
     if(size < 64) size = 64;
@@ -83,7 +86,7 @@ static inline void wpacket_write(wpacket *w,char *in,uint16_t size)
         return;
     }
     if(!w->writer.cur)
-        copy_on_write(w);
+        wpacket_copy_on_write(w);
     do{
         uint16_t ret;
         if(!w->writer.cur || 0 == (ret = (uint16_t)buffer_write(&w->writer,in,(uint32_t)size)))
@@ -98,14 +101,14 @@ static inline void wpacket_write(wpacket *w,char *in,uint16_t size)
 }
 
 static inline void wpacket_write_uint8(wpacket *w,uint8_t value)
-{   
+{  
     wpacket_write(w,(char*)&value,sizeof(value));
 }
 
 static inline void wpacket_write_uint16(wpacket *w,uint16_t value)
 {
-    value = _hton16(value);    
-    wpacket_write(w,(char*)&value,sizeof(value));
+    value = _hton16(value);
+    wpacket_write(w,(char*)&value,sizeof(value));        
 }
 
 static inline void wpacket_write_uint32(wpacket *w,uint32_t value)
@@ -136,6 +139,98 @@ static inline void wpacket_write_string(wpacket *w ,const char *value)
 {
     wpacket_write_binary(w,value,strlen(value)+1);
 }
+
+
+typedef struct wpacket_book{
+    buffer_writer writer;
+    void (*write)(struct wpacket_book *_book,...);
+}wpacket_book;
+
+
+static inline void _write_book_uint8(wpacket_book *_book,...)
+{  
+    va_list vl;
+    va_start(vl,_book);
+    uint8_t value = va_arg(vl,uint8_t);
+    buffer_write(&_book->writer,(char*)&value,sizeof(value));
+}
+
+static inline void _write_book_uint16(wpacket_book *_book,...)
+{
+    va_list vl;
+    va_start(vl,_book);
+    uint16_t value = _hton16(va_arg(vl,uint16_t));
+    buffer_write(&_book->writer,(char*)&value,sizeof(value));       
+}
+
+static inline void _write_book_uint32(wpacket_book *_book,...)
+{   
+    va_list vl;
+    va_start(vl,_book);
+    uint32_t value = _hton32(va_arg(vl,uint32_t));
+    buffer_write(&_book->writer,(char*)&value,sizeof(value));
+}
+
+static inline void _write_book_uint64(wpacket_book *_book,...)
+{   
+    va_list vl;
+    va_start(vl,_book);
+    uint64_t value = _hton64(va_arg(vl,uint64_t));
+    buffer_write(&_book->writer,(char*)&value,sizeof(value));
+}
+
+static inline void _write_book_double(wpacket_book *_book,...)
+{   
+    va_list vl;
+    va_start(vl,_book);
+    double value = va_arg(vl,double);
+    buffer_write(&_book->writer,(char*)&value,sizeof(value));
+}
+
+
+//book space and fill with 0
+
+static inline wpacket_book wpacket_book_uint8(wpacket *w)
+{  
+    uint8_t value = 0;
+    wpacket_book book = {.writer = w->writer,.write = _write_book_uint8};
+    wpacket_write(w,(char*)&value,sizeof(value));
+    return book;
+}
+
+static inline wpacket_book wpacket_book_uint16(wpacket *w)
+{
+    uint16_t value = 0;
+    wpacket_book book = {.writer = w->writer,.write = _write_book_uint16};    
+    wpacket_write(w,(char*)&value,sizeof(value));
+    return book;        
+}
+
+static inline wpacket_book wpacket_book_uint32(wpacket *w)
+{   
+    uint32_t value = 0;
+    wpacket_book book = {.writer = w->writer,.write = _write_book_uint32};
+    wpacket_write(w,(char*)&value,sizeof(value));
+    return book;
+}
+
+static inline wpacket_book wpacket_book_uint64(wpacket *w)
+{   
+    uint64_t value = 0;
+    wpacket_book book = {.writer = w->writer,.write = _write_book_uint64};    
+    wpacket_write(w,(char*)&value,sizeof(value));
+    return book;
+}
+
+static inline wpacket_book wpacket_book_double(wpacket *w)
+{   
+    double value = 0;
+    wpacket_book book = {.writer = w->writer,.write = _write_book_double};    
+    wpacket_write(w,(char*)&value,sizeof(value));
+    return book;
+}
+
+
 
 
 #endif  

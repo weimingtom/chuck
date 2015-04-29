@@ -30,6 +30,7 @@ source =  util/exception.c\
 		  util/wpacket.c\
 		  util/rpacket.c\
 		  util/packet.c\
+		  util/rawpacket.c\
 		  thread/thread.c\
 		  thread/spinlock.c\
 		  socket/socket.c\

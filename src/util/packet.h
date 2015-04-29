@@ -34,7 +34,7 @@ typedef struct packet
     bytebuffer* head;        //head or buff list
     struct packet*  (*construct_write)(struct packet*);
     struct packet*  (*construct_read)(struct packet*);
-    uint16_t    len_packet;  //total size of packet in bytes        
+    uint32_t    len_packet;  //total size of packet in bytes        
     uint16_t    spos;        //start pos in head 
     uint8_t     type;      
 }packet;
@@ -44,8 +44,8 @@ typedef struct packet
 #define SIZE_HEAD sizeof(TYPE_HEAD)
 
 
-#define make_writepacket(p) ((packet*)(p))->construct_write(p)
-#define make_readpacket(p) ((packet*)(p))->construct_read(p)
+#define make_writepacket(p) ((packet*)(p))->construct_write((packet*)(p))
+#define make_readpacket(p) ((packet*)(p))->construct_read((packet*)(p))
 
 void packet_del(packet*);
 
