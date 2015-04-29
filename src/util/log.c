@@ -79,9 +79,16 @@ int32_t write_prefix(char *buf,uint8_t loglev)
     clock_gettime (CLOCK_REALTIME, &tv);
 	struct tm _tm;
 	localtime_r(&tv.tv_sec, &_tm);
-	return sprintf(buf,"[%s]%04d-%02d-%02d-%02d:%02d:%02d.%03d[%x]:",log_lev_str[loglev],
-				   _tm.tm_year+1900,_tm.tm_mon+1,_tm.tm_mday,_tm.tm_hour,_tm.tm_min,_tm.tm_sec,
-				   (int32_t)tv.tv_nsec/1000000,(uint32_t)pthread_self());
+	return sprintf(buf,"[%s]%04d-%02d-%02d-%02d:%02d:%02d.%03d[%x]:",
+				   log_lev_str[loglev],
+				   _tm.tm_year+1900,
+				   _tm.tm_mon+1,
+				   _tm.tm_mday,
+				   _tm.tm_hour,
+				   _tm.tm_min,
+				   _tm.tm_sec,
+				   (int32_t)tv.tv_nsec/1000000,
+				   (uint32_t)pthread_self());
 }
 
 static void* log_routine(void *arg){
@@ -103,8 +110,16 @@ static void* log_routine(void *arg){
 				clock_gettime(CLOCK_REALTIME, &tv);
 				struct tm _tm;
 				localtime_r(&tv.tv_sec, &_tm);
-				snprintf(filename,128,"%s[%d]-%04d-%02d-%02d %02d.%02d.%02d.%03d.log",item->_logfile->filename,getpid(),
-					   _tm.tm_year+1900,_tm.tm_mon+1,_tm.tm_mday,_tm.tm_hour,_tm.tm_min,_tm.tm_sec,(int32_t)tv.tv_nsec/1000000);
+				snprintf(filename,128,"%s[%d]-%04d-%02d-%02d %02d.%02d.%02d.%03d.log",
+						 item->_logfile->filename,
+						 getpid(),
+					     _tm.tm_year+1900,
+					     _tm.tm_mon+1,
+					     _tm.tm_mday,
+					     _tm.tm_hour,
+					     _tm.tm_min,
+					     _tm.tm_sec,
+					     (int32_t)tv.tv_nsec/1000000);
 				item->_logfile->file = fopen(filename,"w+");
 			}
 			if(item->_logfile->file){

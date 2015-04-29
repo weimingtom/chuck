@@ -105,9 +105,14 @@ static inline void print_call_stack(exception_frame *frame)
     listnode *node = list_begin(&frame->call_stack);
     int32_t f = 0;
     if(frame->exception == except_segv_fault)
-	    size += snprintf(ptr,MAX_LOG_SIZE," exception\n %s (invaild access addr:%p)\n",exception_description(frame->exception),frame->addr);
+	    size += snprintf(ptr,MAX_LOG_SIZE,
+                         " exception\n %s (invaild access addr:%p)\n",
+                         exception_description(frame->exception),
+                         frame->addr);
     else
-	    size += snprintf(ptr,MAX_LOG_SIZE," exception\n %s\n",exception_description(frame->exception));
+	    size += snprintf(ptr,MAX_LOG_SIZE,
+                         " exception\n %s\n",
+                         exception_description(frame->exception));
     ptr = buf+size;
     while(node != NULL && size < MAX_LOG_SIZE)
     {
