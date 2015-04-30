@@ -32,7 +32,7 @@ typedef struct bytebuffer{
 
 static inline void bytebuffer_dctor(void *_)
 {
-	printf("bytebuffer_dctor\n");
+	//printf("bytebuffer_dctor\n");
 	bytebuffer *b = (bytebuffer*)_;
 	if(b->next)
 		refobj_dec((refobj*)b->next);
@@ -41,7 +41,7 @@ static inline void bytebuffer_dctor(void *_)
 
 static inline bytebuffer *bytebuffer_new(uint32_t capacity)
 {
-	printf("bytebuffer_new\n");
+	//printf("bytebuffer_new\n");
 	uint32_t size = sizeof(bytebuffer) + capacity;
     bytebuffer *b = (bytebuffer*)calloc(1,size);
 	if(b){   
