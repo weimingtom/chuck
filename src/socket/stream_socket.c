@@ -91,9 +91,17 @@ static void on_events(handle *h,int32_t events){
 		s->status ^= SOCKET_INLOOP;
 	}while(0);
 	if(s->status & SOCKET_CLOSE){
+		if(s->dctor) 
+			s->dctor(s);		
 		close(h->fd);
 		free(h);		
 	}
+}
+
+void    stream_socket_construct(socket_ *s){
+	((handle*)s)->on_events = on_events;
+	((handle*)s)->imp_engine_add = imp_engine_add;
+	s->status = SOCKET_STREAM;	
 }	
 
 handle *new_stream_socket(int32_t fd){

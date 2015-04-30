@@ -40,6 +40,7 @@ source =  util/exception.c\
 		  socket/datagram_socket.c\
 		  socket/socket_helper.c\
 		  socket/wrap/decoder.c\
+		  socket/wrap/connection.c\
 		  engine/engine.c\
 		  lua/lua_util.c\
 		  mem/obj_allocator.c	  

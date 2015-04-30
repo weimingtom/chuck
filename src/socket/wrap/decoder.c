@@ -3,15 +3,17 @@
 #include "packet/rpacket.h"
 
 static packet *rawpk_unpack(decoder *d,int32_t *err){
-	rawpacket *raw;
+	rawpacket  *raw;
+	bytebuffer *next;
 	if(err) *err = 0;
 	if(!d->size) return NULL;
 
 	raw = rawpacket_new_by_buffer(d->buff);
 	d->size -= d->buff->size;
 	if(d->buff->next){
+		next = d->buff->next;
 		refobj_dec((refobj*)d->buff);
-		d->buff = d->buff->next;		
+		d->buff = next;		
 	}else{
 		refobj_dec((refobj*)d->buff);
 		d->buff = NULL;
@@ -25,6 +27,7 @@ static packet *rpk_unpack(decoder *d,int32_t *err){
 	uint32_t      pk_total,size;
 	buffer_reader reader;
 	rpacket      *rpk;
+	bytebuffer   *next;
 	if(err) *err = 0;
 
 	if(d->size <= SIZE_HEAD)
@@ -59,8 +62,9 @@ static packet *rpk_unpack(decoder *d,int32_t *err){
 				break;
 			}
 			d->pos = 0;
+			next = d->buff->next;
 			refobj_dec((refobj*)d->buff);
-			d->buff = d->buff->next;
+			d->buff = next;
 		}
 	}while(pk_total);
 	return (packet*)rpk;

@@ -298,6 +298,7 @@ enum{
     ENOASSENG,                  /*no associate engine*/
     EINVISOKTYPE,               /*invaild socket type*/
     EASSENG,                    /*already associate*/
+    EINVIPK,                    /*invaild packet type*/
 };
     
 #endif

@@ -10,7 +10,7 @@ enum{
 	SOCKET_INLOOP   = 1 << 4,
 };
 
-typedef struct{
+typedef struct socket_{
 	handle  base;
 	int32_t status;
 	list    pending_send;//尚未处理的发请求
@@ -20,7 +20,9 @@ typedef struct{
 		void    (*datagram_callback)(handle*,void*,int32_t,int32_t,int32_t recvflags);
 	};
 	void *ud;
+	void (*dctor)(void*);
 }socket_;
+
 
 handle *new_stream_socket(int32_t fd);
 handle *new_datagram_socket(int32_t fd);
@@ -32,19 +34,14 @@ enum{
 	IO_NOW  = 2,
 };
 
-/*void    socket_set_ud(handle *h,void *ud){
-	((socket_*)h)->ud = ud;
-}
-
-void   *socket_get_ud(handle *h){
-	return ((socket_*)h)->ud;
-}*/
-
 int32_t stream_socket_send(handle*,iorequest*,int32_t flag);
 int32_t stream_socket_recv(handle*,iorequest*,int32_t flag);
 
 int32_t datagram_socket_send(handle*,iorequest*,int32_t flag);
 int32_t datagram_socket_recv(handle*,iorequest*,int32_t flag,int32_t *recvflags);
 
+//use by subclass to construct base part
+void    construct_stream_socket(socket_*);
+void    construct_datagram_socket(socket_*);
 
 #endif

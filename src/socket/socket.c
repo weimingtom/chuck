@@ -20,6 +20,8 @@ void close_socket(handle *h)
 		if(s->status & SOCKET_INLOOP){
 			s->status |= SOCKET_CLOSE;
 		}else{
+			if(s->dctor) 
+				s->dctor(s);
 			close(h->fd);
 			free(h);				
 		}
