@@ -35,7 +35,6 @@ typedef struct connection{
     bytebuffer  *next_recv_buf;        
     list         send_list;//待发送的包
     uint32_t     recv_bufsize;
-    int32_t      (*base_engine_add)(engine*,struct handle*,generic_callback);
     void         (*on_packet)(struct connection*,packet*);
     void         (*on_disconnected)(struct connection*,int32_t err);
     decoder     *decoder_;

@@ -21,7 +21,6 @@ static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback)
 		return -EUNSPPLAT;
 #endif
 	if(ret == 0){
-		easy_noblock(h->fd,1);
 		h->e = e;
 		((connector*)h)->callback = (void (*)(int32_t fd,int32_t err,void*))callback;	
 	}
@@ -31,16 +30,10 @@ static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback)
 static void process_connect(handle *h,int32_t events){
 	int32_t err = 0;
 	int32_t fd = -1;
-	socklen_t len;
+	socklen_t len = sizeof(err);
 	do{
-		len = 0;
 		if(getsockopt(h->fd, SOL_SOCKET, SO_ERROR, &err, &len) == -1){
 			((connector*)h)->callback(-1,err,((connector*)h)->ud);
-		    break;
-		}
-		len = 0;
-		if(getsockopt(h->fd, SOL_SOCKET, SO_ERROR, &err, &len) == -1){
-		    ((connector*)h)->callback(-1,err,((connector*)h)->ud);
 		    break;
 		}
 		if(err){

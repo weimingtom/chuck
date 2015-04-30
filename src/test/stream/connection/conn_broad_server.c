@@ -19,17 +19,14 @@ static void timer_callback(void *ud){
 }
 
 static void on_packet(connection *c,packet *p){
-	printf("on_packet,%lld\n",rpacket_read_uint64((rpacket*)p));
-	connection_send(c,make_writepacket(p));
-	connection_send(c,make_writepacket(p));
-	/*int i = 0;
+	int i = 0;
 	for(i;i < client_count; ++i){
 		connection *conn = clients[i];
 		if(conn){
 			packet_count++;
 			connection_send(conn,make_writepacket(p));
 		}
-	}*/
+	}
 }
 
 static void on_disconnected(connection *c,int32_t err){
@@ -49,8 +46,10 @@ static void on_connection(int32_t fd,sockaddr_ *_,void *ud){
 
 	int i = 0;
 	for(i;i < 1000; ++i)
-		if(!clients[i])
+		if(!clients[i]){
 			clients[i] = c;
+			break;
+		}
 	++client_count;	
 }
 

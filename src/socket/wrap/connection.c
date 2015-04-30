@@ -1,6 +1,8 @@
 #include "socket/wrap/connection.h"
 #include "engine/engine.h"
 
+static int32_t (*base_engine_add)(engine*,struct handle*,generic_callback) = NULL;
+
 enum{
 	RECVING   = 1 << 5,
 	SENDING   = 1 << 6,
@@ -209,7 +211,7 @@ static void SendFinish(connection *c,int32_t bytestransfer,int32_t err_code)
 	if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN)){
 		_close(c,err_code);
 	}else{		
-		for(;;){
+		//for(;;){
 			update_send_list(c,bytestransfer);
 			if(!prepare_send(c)) {
 				((socket_*)c)->status ^= SENDING;
@@ -217,10 +219,8 @@ static void SendFinish(connection *c,int32_t bytestransfer,int32_t err_code)
 					_close(c,0);
 				return;
 			}
-			bytestransfer = Send(c,&err_code,IO_NOW);
-			if(bytestransfer < 0 && err_code == EAGAIN) 
-				return;		
-		}		
+			Send(c,&err_code,IO_POST);	
+		//}		
 	}
 }
 
@@ -242,7 +242,7 @@ static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback){
 	assert(e && h && callback);
 	if(h->e) return -EASSENG;
 	//call the base_engine_add first
-	ret = ((connection*)h)->base_engine_add(e,h,(generic_callback)IoFinish);
+	ret = base_engine_add(e,h,(generic_callback)IoFinish);
 	if(ret == 0){
 		((connection*)h)->on_packet = (void(*)(struct connection*,packet*))callback;
 		//post the first recv request
@@ -289,7 +289,8 @@ connection *connection_new(int32_t fd,uint32_t buffersize,decoder *d)
 	c->next_recv_buf = bytebuffer_new(buffersize);
 	construct_stream_socket(&c->base);
 	//save socket_ imp_engine_add,and replace with self
-	c->base_engine_add = ((handle*)c)->imp_engine_add;
+	if(!base_engine_add)
+		base_engine_add = ((handle*)c)->imp_engine_add; 
 	((handle*)c)->imp_engine_add = imp_engine_add;
 	((socket_*)c)->dctor = connection_dctor;
 	c->decoder_ = d ? d:rawpacket_decoder_new();
