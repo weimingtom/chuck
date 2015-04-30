@@ -22,7 +22,7 @@ static void on_connected(int32_t fd,int32_t err,void *ud){
 		engine *e = (engine*)ud;
 		connection *c = connection_new(fd,65535,rpacket_decoder_new(1024));
 		engine_add(e,(handle*)c,(generic_callback)on_packet);
-		packet *p = wpacket_new(64);
+		packet *p = (packet*)wpacket_new(64);
 		wpacket_write_uint64((wpacket*)p,(uint64_t)c);
 		wpacket_write_string((wpacket*)p,"hello world\n");
 		connection_send(c,p);		

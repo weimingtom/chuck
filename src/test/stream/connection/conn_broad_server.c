@@ -32,7 +32,7 @@ static void on_packet(connection *c,packet *p){
 static void on_disconnected(connection *c,int32_t err){
 	printf("on_disconnected %d\n",err);
 	int i = 0;
-	for(i;i < client_count; ++i)
+	for(;i < client_count; ++i)
 		if(clients[i]) clients[i] = NULL;	
 	--client_count;
 }

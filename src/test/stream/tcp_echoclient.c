@@ -26,7 +26,8 @@ int main(int argc,char **argv){
 	for( ; i < size; ++i){
 		int32_t fd = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 		easy_noblock(fd,1);
-		if(0 == easy_connect(fd,&server,NULL))
+		int32_t ret;
+		if(0 == (ret = easy_connect(fd,&server,NULL)))
 			on_connected(fd,0,e);
 		else if(ret == -EINPROGRESS){
 			handle *contor = connector_new(fd,e);

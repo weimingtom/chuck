@@ -111,7 +111,6 @@ static void RecvFinish(connection *c,int32_t bytestransfer,int32_t err_code)
 			_close(c,err_code);
 			return;	
 		}else if(bytestransfer > 0){
-			total_recv += bytestransfer;
 			update_next_recv_pos(c,bytestransfer);
 			int32_t unpack_err;
 			do{
@@ -131,6 +130,8 @@ static void RecvFinish(connection *c,int32_t bytestransfer,int32_t err_code)
 				bytestransfer = Recv(c,&err_code);
 				if(bytestransfer < 0 && err_code == EAGAIN) 
 					return;
+				else if(bytestransfer > 0)
+					total_recv += bytestransfer;
 			}
 		}
 	}while(1);
@@ -208,10 +209,11 @@ static inline void update_send_list(connection *c,int32_t _bytestransfer)
 
 static void SendFinish(connection *c,int32_t bytestransfer,int32_t err_code)
 {
+	int32_t total_send = 0;
 	if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN)){
 		_close(c,err_code);
 	}else{		
-		//for(;;){
+		for(;;){
 			update_send_list(c,bytestransfer);
 			if(!prepare_send(c)) {
 				((socket_*)c)->status ^= SENDING;
@@ -219,8 +221,17 @@ static void SendFinish(connection *c,int32_t bytestransfer,int32_t err_code)
 					_close(c,0);
 				return;
 			}
-			Send(c,&err_code,IO_POST);	
-		//}		
+			if(total_send > c->recv_bufsize){
+				Send(c,&err_code,IO_POST);
+			}else{
+				bytestransfer = Send(c,&err_code,IO_NOW);
+				if(bytestransfer < 0 && err_code == EAGAIN) 
+					return;
+				else if(bytestransfer > 0){
+					total_send += bytestransfer;
+				}
+			}
+		}	
 	}
 }
 
