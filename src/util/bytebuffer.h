@@ -79,9 +79,10 @@ static inline int32_t reader_check_size(buffer_reader *reader,uint32_t size){
 	return reader->cur->size >= tmp && tmp > size;
 }
 
-static inline uint32_t buffer_read(buffer_reader *reader,char *out,uint32_t size){
+static inline uint32_t buffer_read(buffer_reader *reader,void *_,uint32_t size){
 	uint32_t copy_size;
 	uint32_t out_size = 0;
+	char 	*out = (char*)_;
 	bytebuffer *b = reader->cur;
 	while(b && size){
         copy_size = b->size - reader->pos;
@@ -101,9 +102,10 @@ static inline uint32_t buffer_read(buffer_reader *reader,char *out,uint32_t size
 	return out_size;
 }
 
-static inline uint32_t buffer_write(buffer_writer *writer,char *in,uint32_t size){
+static inline uint32_t buffer_write(buffer_writer *writer,void *_,uint32_t size){
     uint32_t copy_size;
     uint32_t in_size = 0;
+    char 	*in = (char*)_;
     bytebuffer *b = writer->cur;
     while(b && size){
         copy_size = b->cap - writer->pos;

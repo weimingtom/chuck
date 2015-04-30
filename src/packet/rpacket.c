@@ -20,7 +20,7 @@ rpacket *rpacket_new(bytebuffer *b,uint32_t start_pos){
 		((packet*)r)->spos = start_pos;
 		refobj_inc((refobj*)b);
 		buffer_reader_init(&r->reader,b,start_pos);
-		r->data_remain = rpacket_read_uint16(r);		
+		buffer_read(&r->reader,&r->data_remain,sizeof(r->data_remain));		
 		((packet*)r)->len_packet = r->data_remain + SIZE_HEAD;
 	}
 	INIT_CONSTROUCTOR(r);

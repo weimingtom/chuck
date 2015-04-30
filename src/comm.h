@@ -113,6 +113,7 @@ typedef struct handle{
 
 
 #define MAX_UINT32 0xffffffff
+#define MAX_UINT16 0xffff
 #define likely(x) __builtin_expect(!!(x), 1)  
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
