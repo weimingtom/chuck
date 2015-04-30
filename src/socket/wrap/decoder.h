@@ -46,6 +46,7 @@ void decoder_del(decoder*);
 
 static inline void decoder_init(decoder *d,bytebuffer *buff,uint32_t pos){
     d->buff = buff;
+    refobj_inc((refobj*)buff);
     d->pos  = pos;
     d->size = 0;
 }

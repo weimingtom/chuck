@@ -52,6 +52,14 @@ static inline bytebuffer *bytebuffer_new(uint32_t capacity)
 	return b;
 }
 
+static inline void bytebuffer_set(bytebuffer **b1,bytebuffer *b2)
+{
+    if(*b1 == b2) return;
+    if(b2)  refobj_inc((refobj*)b2);
+    if(*b1) refobj_dec((refobj*)*b1);
+	*b1 = b2;
+}
+
 
 typedef struct{
 	bytebuffer *cur;

@@ -22,7 +22,8 @@
 #include "socket/socket.h" 
 
 #define MAX_WBAF 512
-#define MAX_SEND_SIZE 65535   
+#define MAX_SEND_SIZE 65535
+#define MIN_RECV_BUFSIZE 1024   
 
 typedef struct connection{
     socket_      base;
@@ -35,11 +36,22 @@ typedef struct connection{
     list         send_list;//待发送的包
     uint32_t     recv_bufsize;
     int32_t      (*base_engine_add)(engine*,struct handle*,generic_callback);
-    void         (*on_packet)(struct connection*,packet*,int32_t err);
+    void         (*on_packet)(struct connection*,packet*);
+    void         (*on_disconnected)(struct connection*,int32_t err);
     decoder     *decoder_;
+    uint8_t      closing_phase;
 }connection;
 
+connection *connection_new(int32_t fd,uint32_t buffersize,decoder *d);
 int32_t     connection_send(connection *c,packet *p);
-int32_t     connection_start_recv(connection *c);
+void        connection_close(connection *c);
+
+
+static inline void 
+connection_set_discnt_callback(connection *c,
+                               void(*on_disconnected)(struct connection*,int32_t))
+{
+    c->on_disconnected = on_disconnected;
+}
 
 #endif    

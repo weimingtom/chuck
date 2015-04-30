@@ -4,21 +4,18 @@
 
 static packet *rawpk_unpack(decoder *d,int32_t *err){
 	rawpacket  *raw;
-	bytebuffer *next;
+	uint32_t    size;
 	if(err) *err = 0;
 	if(!d->size) return NULL;
 
-	raw = rawpacket_new_by_buffer(d->buff);
-	d->size -= d->buff->size;
-	if(d->buff->next){
-		next = d->buff->next;
-		refobj_dec((refobj*)d->buff);
-		d->buff = next;		
-	}else{
-		refobj_dec((refobj*)d->buff);
-		d->buff = NULL;
+	raw = rawpacket_new_by_buffer(d->buff,d->pos);
+	size = d->buff->size - d->pos;
+	d->pos  += size;
+	d->size -= size;
+	if(d->pos >= d->buff->cap){
+		d->pos = 0;
+		bytebuffer_set(&d->buff,d->buff->next);
 	}
-
 	return (packet*)raw;
 }
 
@@ -27,7 +24,6 @@ static packet *rpk_unpack(decoder *d,int32_t *err){
 	uint32_t      pk_total,size;
 	buffer_reader reader;
 	rpacket      *rpk;
-	bytebuffer   *next;
 	if(err) *err = 0;
 
 	if(d->size <= SIZE_HEAD)
@@ -55,16 +51,12 @@ static packet *rpk_unpack(decoder *d,int32_t *err){
 		d->size -= size;
 		if(d->pos >= d->buff->cap)
 		{
-			if(!d->buff->next){
+			bytebuffer_set(&d->buff,d->buff->next);
+			d->pos = 0;
+			if(!d->buff){
 				assert(pk_total == 0);
-				refobj_dec((refobj*)d->buff);
-				d->buff = NULL;
 				break;
 			}
-			d->pos = 0;
-			next = d->buff->next;
-			refobj_dec((refobj*)d->buff);
-			d->buff = next;
 		}
 	}while(pk_total);
 	return (packet*)rpk;
@@ -86,6 +78,6 @@ decoder *rawpacket_decoder_new(){
 
 void decoder_del(decoder *d){
 	if(d->dctor) d->dctor(d);
-	if(d->buff) refobj_dec((refobj*)d->buff);
+	if(d->buff) bytebuffer_set(&d->buff,NULL);
 	free(d);
 }

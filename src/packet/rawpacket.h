@@ -33,7 +33,7 @@ typedef struct
 rawpacket *rawpacket_new(uint32_t size);
 
 //will add reference count of b
-rawpacket *rawpacket_new_by_buffer(bytebuffer *b);
+rawpacket *rawpacket_new_by_buffer(bytebuffer *b,uint32_t spos);
 
 static inline void rawpacket_expand(rawpacket *raw,uint32_t newsize)
 {

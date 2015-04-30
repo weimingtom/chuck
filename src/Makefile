@@ -52,7 +52,8 @@ test-source = test/testexception.c\
 			  test/datagram/udp_echoserver.c\
 			  test/datagram/udp_echoclient.c\
 			  test/testpacket.c\
-			  test/testdecoder.c
+			  test/testdecoder.c\
+			  test/stream/connection/conn_echo_server.c
 
 release:$(source)
 	$(CC) $(SHARED) -O2 $(CFLAGS) -c $(source) $(INCLUDE) $(DEFINE)
@@ -72,6 +73,7 @@ test:$(test-source)
 	$(CC) $(CFLAGS) -o udp_echoclient udp_echoclient.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o testpacket testpacket.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o testdecoder testdecoder.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
+	$(CC) $(CFLAGS) -o conn_echo_server conn_echo_server.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 clean:
 	rm *.o
 	rm *.a	

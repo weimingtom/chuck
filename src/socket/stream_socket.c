@@ -98,7 +98,7 @@ static void on_events(handle *h,int32_t events){
 	}
 }
 
-void    stream_socket_construct(socket_ *s){
+void    construct_stream_socket(socket_ *s){
 	((handle*)s)->on_events = on_events;
 	((handle*)s)->imp_engine_add = imp_engine_add;
 	s->status = SOCKET_STREAM;	
