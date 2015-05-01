@@ -10,7 +10,7 @@ int32_t connect_timeout(uint32_t event,uint64_t _,void *ud){
 		close(((handle*)c)->fd);
 		free(c);
 	}
-	return -1;
+	return -1;//one shot timer,return -1
 }
 
 static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback)
