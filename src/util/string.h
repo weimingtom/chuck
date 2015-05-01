@@ -28,8 +28,6 @@ void        string_del(string*);
 
 const char *string_cstr(string*);
 
-void        string_replace(string*,const char*,uint32_t n);
-
 int32_t     string_len(string*);
     
 void        string_append(string*,const char*);

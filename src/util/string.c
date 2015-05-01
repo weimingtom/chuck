@@ -49,21 +49,6 @@ static inline void holder_append(holder *h,const char *str,uint32_t len){
 	h->len = total_len - 1;
 }
 
-static inline void holder_replace(holder *h,const char *str,uint32_t n){
-	uint32_t total_len = n +1;
-	if(h->cap < total_len){
-		h->cap = size_of_pow2(total_len);
-		char *tmp = realloc(h->str,h->cap);
-		if(!tmp){
-			tmp = calloc(1,h->cap);
-			free(h->str);
-		}
-		h->str = tmp;				
-	}
-	strncpy(h->str,str,n);
-	h->str[n] = 0;
-	h->len = n;	
-}
 
 static inline void holder_release(holder *h)
 {
@@ -136,20 +121,6 @@ int32_t  string_len(string *s)
 	return s->len;
 }
 
-void string_replace(string *dest,const char *str,uint32_t n)
-{
-	uint32_t _n = strlen(str);
-	if(n > _n) n = _n;
-	if(dest->holder){
-		holder_replace(dest->holder,str,n);
-	}else if(n + 1 <= MIN_STRING_LEN){
-		strncpy(dest->str,str,n);
-		dest->str[n] = 0;
-		dest->len = n;
-	}else{
-		dest->holder = holder_new(str,n);
-	}
-}
 
 void string_append(string *s,const char *str)
 {
