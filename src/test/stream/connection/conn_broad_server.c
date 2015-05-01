@@ -18,13 +18,15 @@ static void timer_callback(void *ud){
 	packet_count = 0;
 }
 
-static void on_packet(connection *c,packet *p){
-	int i = 0;
-	for(i;i < client_count; ++i){
-		connection *conn = clients[i];
-		if(conn){
-			packet_count++;
-			connection_send(conn,make_writepacket(p));
+static void on_packet(connection *c,packet *p,int32_t event){
+	if(event == PKEV_RECV){
+		int i = 0;
+		for(;i < client_count; ++i){
+			connection *conn = clients[i];
+			if(conn){
+				packet_count++;
+				connection_send(conn,make_writepacket(p),0);
+			}
 		}
 	}
 }

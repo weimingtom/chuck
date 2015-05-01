@@ -21,12 +21,16 @@ typedef struct socket_{
 	};
 	void *ud;
 	void (*dctor)(void*);
+	void (*pending_dctor)(iorequest*);//use to clear pending iorequest
 }socket_;
 
 
 handle *new_stream_socket(int32_t fd);
 handle *new_datagram_socket(int32_t fd);
 
+static inline void socket_set_pending_dctor(handle *h,void (*pending_dctor)(iorequest*)){
+	((socket_*)h)->pending_dctor = pending_dctor;
+}
 void    close_socket(handle*);
 
 enum{

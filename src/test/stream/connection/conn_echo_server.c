@@ -15,9 +15,14 @@ static void timer_callback(void *ud){
 	totalbytes = 0.0;
 }
 
-static void on_packet(connection *c,packet *p){
-	printf("on_packet\n");
-	connection_send(c,make_writepacket(p));
+static void on_packet(connection *c,packet *p,int32_t event){
+	if(event == PKEV_RECV){
+		printf("on_packet\n");
+		connection_send(c,make_writepacket(p),1);
+	}else{
+		printf("packet send finish\n");
+		connection_close(c);
+	}
 }
 
 static void on_disconnected(connection *c,int32_t err){

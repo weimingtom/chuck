@@ -95,8 +95,8 @@ static inline void update_next_recv_pos(connection *c,int32_t _bytestransfer)
 
 
 static inline void _close(connection *c,int32_t err){
-	if(c->closing_phase == 2) return;
-	c->closing_phase = 2;
+	if(((socket_*)c)->status & SOCKET_CLOSE)
+		return;
 	if(c->on_disconnected) c->on_disconnected(c,err);
 	close_socket((handle*)c);
 }
@@ -104,8 +104,7 @@ static inline void _close(connection *c,int32_t err){
 static void RecvFinish(connection *c,int32_t bytestransfer,int32_t err_code)
 {
 	int32_t total_recv = 0;
-	packet *pk;
-	if(c->closing_phase) return;	
+	packet *pk;	
 	do{	
 		if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN)){
 			_close(c,err_code);
@@ -116,11 +115,13 @@ static void RecvFinish(connection *c,int32_t bytestransfer,int32_t err_code)
 			do{
 				pk = c->decoder_->unpack(c->decoder_,&unpack_err);
 				if(pk){
-					c->on_packet(c,pk);
+					c->on_packet(c,pk,PKEV_RECV);
 					packet_del(pk);
+					if(((socket_*)c)->status & SOCKET_CLOSE)
+						return;
 				}else if(unpack_err != 0){
 					_close(c,err_code);
-					break;
+					return;
 				}
 			}while(pk);
 			if(total_recv >= c->recv_bufsize){
@@ -186,6 +187,11 @@ static inline void update_send_list(connection *c,int32_t _bytestransfer)
 		assert(w);
 		if((uint32_t)bytestransfer >= ((packet*)w)->len_packet)
 		{
+			if(w->mask){
+				c->on_packet(c,w,PKEV_SEND);
+				if(((socket_*)c)->status & SOCKET_CLOSE)
+					return;
+			}
 			list_pop(&c->send_list);
 			bytestransfer -= ((packet*)w)->len_packet;
 			packet_del(w);
@@ -215,10 +221,10 @@ static void SendFinish(connection *c,int32_t bytestransfer,int32_t err_code)
 	}else{		
 		for(;;){
 			update_send_list(c,bytestransfer);
+			if(((socket_*)c)->status & SOCKET_CLOSE)
+					return;
 			if(!prepare_send(c)) {
 				((socket_*)c)->status ^= SENDING;
-				if(c->closing_phase)
-					_close(c,0);
 				return;
 			}
 			if(total_send > c->recv_bufsize){
@@ -239,6 +245,8 @@ static void IoFinish(handle *sock,void *_,int32_t bytestransfer,int32_t err_code
 {
 	iorequest  *io = ((iorequest*)_);
 	connection *c  = (connection*)sock;
+	if(((socket_*)c)->status & SOCKET_CLOSE)
+		return;
 	if(io == (iorequest*)&c->send_overlap)
 		SendFinish(c,bytestransfer,err_code);
 	else if(io == (iorequest*)&c->recv_overlap)
@@ -255,7 +263,7 @@ static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback){
 	//call the base_engine_add first
 	ret = base_engine_add(e,h,(generic_callback)IoFinish);
 	if(ret == 0){
-		((connection*)h)->on_packet = (void(*)(struct connection*,packet*))callback;
+		((connection*)h)->on_packet = (void(*)(struct connection*,packet*,int32_t))callback;
 		//post the first recv request
 		if(!(((socket_*)h)->status & RECVING))
 			PostRecv((connection*)h);
@@ -263,15 +271,12 @@ static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback){
 	return ret;
 }
 
-int32_t connection_send(connection *c,packet *p){
+int32_t connection_send(connection *c,packet *p,int32_t send_fsh_notify){
 	if(p->type != WPACKET && p->type != RAWPACKET){
 		packet_del(p);
 		return -EINVIPK;
 	}	
-	if(c->closing_phase){
-		packet_del(p);
-		return -ESOCKCLOSE;
-	}	
+	if(send_fsh_notify) p->mask = 1;	
 	list_pushback(&c->send_list,(listnode*)p);
 	if(!(((socket_*)c)->status & SENDING)){
 		prepare_send(c);
@@ -310,25 +315,5 @@ connection *connection_new(int32_t fd,uint32_t buffersize,decoder *d)
 }
 
 void connection_close(connection *c){
-	if(c->closing_phase) return;
-	c->closing_phase = 1;
-	if(!(((socket_*)c)->status & SENDING)){
-		//no pending send,close immediate
-		_close(c,0);
-	}else{
-		disable_read((handle*)c);
-		//shutdown read
-		shutdown(((handle*)c)->fd,SHUT_RD);
-		//添加定时器确保待发送数据发送完毕或发送超时才调用调用refobj_dec
-		/*engine_t e = kn_sock_engine(c->handle);
-		if(e){
-			if(c->sendtimer){
-				 kn_del_timer(c->sendtimer);
-				 c->sendtimer = NULL;
-			}
-			c->sendtimer = kn_reg_timer(e,5000,cb_lastsend,c);
-			if(!c->sendtimer)
-				_force_close(c,0);			
-		}*/			
-	} 	
+	_close(c,0);	
 }

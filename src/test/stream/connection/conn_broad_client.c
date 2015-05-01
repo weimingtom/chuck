@@ -8,11 +8,15 @@
 #include "socket/connector.h"
 
 
-static void on_packet(connection *c,packet *p){
-	rpacket *rpk = (rpacket*)p;
-	uint64_t id = rpacket_peek_uint64(rpk);
-	if(id == (uint64_t)c){
-		connection_send(c,make_writepacket(p));
+static void on_packet(connection *c,packet *p,int32_t event){
+	if(event == PKEV_RECV){
+		rpacket *rpk = (rpacket*)p;
+		uint64_t id = rpacket_peek_uint64(rpk);
+		if(id == (uint64_t)c){
+			connection_send(c,make_writepacket(p),0);
+		}
+	}else if(event == PKEV_SEND){
+		printf("packet send fnish\n");
 	}
 }
 
@@ -25,7 +29,7 @@ static void on_connected(int32_t fd,int32_t err,void *ud){
 		packet *p = (packet*)wpacket_new(64);
 		wpacket_write_uint64((wpacket*)p,(uint64_t)c);
 		wpacket_write_string((wpacket*)p,"hello world\n");
-		connection_send(c,p);		
+		connection_send(c,p,1);		
 	}else{
 		printf("connect error\n");
 	}

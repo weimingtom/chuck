@@ -36,8 +36,6 @@ double   totalbytes   = 0;
 
 
 void transfer_finish(handle *h,void *_,int32_t bytestransfer,int32_t err){
-	if(err == ESOCKCLOSE) return;
-
     my_ioreq *req = ((my_ioreq*)_);
     struct session *s = req->s; 
     if(!req || bytestransfer <= 0)

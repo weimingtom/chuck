@@ -23,7 +23,12 @@
 
 #define MAX_WBAF 512
 #define MAX_SEND_SIZE 65535
-#define MIN_RECV_BUFSIZE 1024   
+#define MIN_RECV_BUFSIZE 1024
+
+enum{
+    PKEV_RECV,            //recv a packet
+    PKEV_SEND,            //send a packet finish
+};
 
 typedef struct connection{
     socket_      base;
@@ -35,14 +40,13 @@ typedef struct connection{
     bytebuffer  *next_recv_buf;        
     list         send_list;//待发送的包
     uint32_t     recv_bufsize;
-    void         (*on_packet)(struct connection*,packet*);
+    void         (*on_packet)(struct connection*,packet*,int32_t event);
     void         (*on_disconnected)(struct connection*,int32_t err);
     decoder     *decoder_;
-    uint8_t      closing_phase;
 }connection;
 
 connection *connection_new(int32_t fd,uint32_t buffersize,decoder *d);
-int32_t     connection_send(connection *c,packet *p);
+int32_t     connection_send(connection *c,packet *p,int32_t send_fsh_notify);
 void        connection_close(connection *c);
 
 

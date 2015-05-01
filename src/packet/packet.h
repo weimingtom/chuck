@@ -31,12 +31,13 @@ enum{
 typedef struct packet
 {
     listnode    node;   
-    bytebuffer* head;        //head or buff list
+    bytebuffer* head;                                        //head or buff list
     struct packet*  (*construct_write)(struct packet*);
     struct packet*  (*construct_read)(struct packet*);
-    uint32_t    len_packet;  //total size of packet in bytes        
-    uint16_t    spos;        //start pos in head 
-    uint8_t     type;      
+    uint32_t    len_packet;                                  //total size of packet in bytes        
+    uint32_t    spos:16;                                     //start pos in head 
+    uint32_t    type:8;
+    uint32_t    mask:8;      
 }packet;
 
 #define TYPE_HEAD uint16_t
