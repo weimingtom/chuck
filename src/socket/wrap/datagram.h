@@ -18,6 +18,22 @@
 #ifndef _DATAGRAM_H_
 #define _DATAGRAM_H_
 
+typedef struct datagram{
+    socket_      base;
+    struct       iovec wsendbuf[MAX_WBAF];
+    struct       iovec wrecvbuf[2];
+    iorequest    recv_overlap;
+    uint32_t     next_recv_pos;
+    bytebuffer  *next_recv_buf;        
+    uint32_t     recv_bufsize;
+    void         (*on_packet)(struct datagram*,packet*);
+    decoder     *decoder_;
+}datagram;
+
+
+datagram *datagram_new(int32_t fd,uint32_t buffersize,decoder *d);
+int32_t   datagram_send(datagram *d,packet *p,sockaddr_ *addr);
+void      datagram_close(datagram *d);
 
 
 

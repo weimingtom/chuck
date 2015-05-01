@@ -263,7 +263,7 @@ static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback){
 	//call the base_engine_add first
 	ret = base_engine_add(e,h,(generic_callback)IoFinish);
 	if(ret == 0){
-		((connection*)h)->on_packet = (void(*)(struct connection*,packet*,int32_t))callback;
+		((connection*)h)->on_packet = (void(*)(connection*,packet*,int32_t))callback;
 		//post the first recv request
 		if(!(((socket_*)h)->status & RECVING))
 			PostRecv((connection*)h);
