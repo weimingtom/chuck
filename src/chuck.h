@@ -17,4 +17,17 @@
 #ifndef _CHUCK_H
 #define _CHUCK_H
 
+#include "comm.h"
+#include "engine/engine.h"
+#include "socket/socket_helper.h"
+#include "socket/acceptor.h"
+#include "socket/connector.h"    
+#include "socket/wrap/connection.h"    
+#include "lua/lua_util.h"
+#include "mem/allocator.h"
+#include "util/log.h"
+#include "util/time.h"
+#include "util/exception.h"   
+
+
 #endif
