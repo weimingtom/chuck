@@ -18,7 +18,8 @@
 #define _ENGINE_H
 
 #include <stdint.h>
-#include "comm.h"    
+#include "comm.h"
+#include "util/timewheel.h"    
 
 engine *engine_new();
 void    engine_del(engine*);
@@ -26,6 +27,7 @@ int32_t engine_run(engine*);
 void    engine_stop(engine*);
 int32_t engine_add(engine*,handle*,generic_callback);
 int32_t engine_remove(handle*);
+timer  *engine_regtimer(engine*,uint32_t timeout,int32_t(*)(uint32_t,uint64_t,void*),void*);
 
 //private function
 int32_t event_add(engine*,handle*,int32_t events);

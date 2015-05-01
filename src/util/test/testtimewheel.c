@@ -4,7 +4,7 @@
 
 int count = 0;
 
-int32_t callback1(uint64_t _0,uint64_t _1,void *_2){
+int32_t callback1(uint32_t _0,uint64_t _1,void *_2){
 	printf("%s,%lld\n",(const char *)_2,systick64() - _1);
 	++count;
 	return 0;
@@ -12,7 +12,7 @@ int32_t callback1(uint64_t _0,uint64_t _1,void *_2){
 
 uint64_t i;
 
-int32_t callback2(uint64_t _0,uint64_t _1,void *_2){
+int32_t callback2(uint32_t _0,uint64_t _1,void *_2){
 	printf("%s,%lld,%d\n",(const char *)_2,i - _1,count);
 	return 0;
 }

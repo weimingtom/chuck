@@ -37,7 +37,7 @@ typedef struct timer{
 	dlistnode     node;
 	uint32_t      timeout;
 	uint64_t      expire;
-	int32_t       (*callback)(uint64_t,uint64_t,void*); 
+	int32_t       (*callback)(uint32_t,uint64_t,void*); 
 	void         *ud;
 }timer;
 
@@ -114,7 +114,7 @@ void wheelmgr_tick(wheelmgr *m,uint64_t now){
 } 
 
 timer *wheelmgr_register(wheelmgr *m,uint32_t timeout,
-					     int32_t(*callback)(uint64_t,uint64_t,void*),
+					     int32_t(*callback)(uint32_t,uint64_t,void*),
 					     void*ud,uint64_t now/*just for test*/){
 	if(timeout == 0 || timeout > MAX_TIMEOUT || !callback)
 		return NULL;

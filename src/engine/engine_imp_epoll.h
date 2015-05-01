@@ -1,14 +1,19 @@
 #include <fcntl.h>              /* Obtain O_* constant definitions */
 #include <unistd.h>
 #include <assert.h>
+#include "util/time.h"
+#include "util/timewheel.h"
+#include "util/timerfd.h"
 
 extern int32_t pipe2(int pipefd[2], int flags);
 
 typedef struct{
-	int32_t epfd;
-	struct  epoll_event* events;
-	int32_t maxevents;
-	int32_t notifyfds[2];//0 for read,1 for write
+	int32_t    epfd;
+	struct     epoll_event* events;
+	int32_t    maxevents;
+	handle    *tfd;
+	wheelmgr  *timermgr;
+	int32_t    notifyfds[2];//0 for read,1 for write
 }epoll_;
 
 int32_t event_add(engine *e,handle *h,int32_t events){
@@ -59,6 +64,21 @@ int32_t event_disable(handle *h,int32_t events){
 	return event_mod(h,h->events & (~events));
 }
 
+void timerfd_callback(void *ud){
+	wheelmgr *mgr = (wheelmgr*)ud;
+	wheelmgr_tick(mgr,systick64());
+}
+
+timer *engine_regtimer(engine *e,uint32_t timeout,
+					   int32_t(*cb)(uint32_t,uint64_t,void*),void *ud){
+	epoll_ *ep = (epoll_*)e;
+	if(!ep->tfd){
+		ep->timermgr = wheelmgr_new();
+		ep->tfd      = timerfd_new(1,ep->timermgr);
+		engine_add(e,ep->tfd,(generic_callback)timerfd_callback);
+	}
+	return wheelmgr_register(ep->timermgr,timeout,cb,ud,systick64());
+}
 
 
 engine* engine_new(){
@@ -92,6 +112,10 @@ engine* engine_new(){
 
 void engine_del(engine *e){
 	epoll_ *ep = (epoll_*)e;
+	if(ep->tfd){
+		engine_remove(ep->tfd);
+		wheelmgr_del(ep->timermgr);
+	}
 	close(ep->epfd);
 	close(ep->notifyfds[0]);
 	close(ep->notifyfds[1]);
@@ -138,12 +162,3 @@ void engine_stop(engine *e){
 	TEMP_FAILURE_RETRY(write(ep->notifyfds[1],&_,sizeof(_)));
 }
 
-/*kn_timer_t kn_reg_timer(engine_t e,uint64_t timeout,int32_t(*cb)(uint32_t,void*),void *ud){
-	kn_epoll *ep = (kn_epoll*)e;
-	if(!ep->timerfd){
-		ep->timerfd = kn_new_timerfd(1);
-		((handle_t)ep->timerfd)->ud = wheelmgr_new();
-		kn_event_add(ep,ep->timerfd,EPOLLIN | EPOLLOUT);			
-	}
-	return wheelmgr_register(((handle_t)ep->timerfd)->ud,timeout,cb,ud);
-}*/

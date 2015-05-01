@@ -3,13 +3,14 @@
 #include "socket/acceptor.h"
 #include "util/time.h"
 #include "session.h"
-#include "util/timerfd.h"
-#include "util/timewheel.h"
 
 
-static void timer_callback(void *ud){
-	printf("client_count:%d,totalbytes:%f MB/s\n",client_count,totalbytes/1024/1024);
-	totalbytes = 0.0;
+int32_t timer_callback(uint32_t event,uint64_t _,void *ud){
+	if(event == TEVENT_TIMEOUT){
+		printf("client_count:%d,totalbytes:%f MB/s\n",client_count,totalbytes/1024/1024);
+		totalbytes = 0.0;
+	}
+	return 0;
 }
 
 static void on_connection(int32_t fd,sockaddr_ *_,void *ud){
@@ -36,8 +37,7 @@ int main(int argc,char **argv){
 	if(0 == easy_listen(fd,&server)){
 		handle *accptor = acceptor_new(fd,e);
 		engine_add(e,accptor,(generic_callback)on_connection);
-		handle *tfd = timerfd_new(1000,NULL);
-		engine_add(e,tfd,(generic_callback)timer_callback);
+		engine_regtimer(e,1000,timer_callback,NULL);
 		engine_run(e);
 	}else{
 		printf("server start error\n");

@@ -19,16 +19,19 @@
 #define _CONNECTOR_H
 
 #include "comm.h"
+#include "util/timewheel.h"    
 
 //void (*connected_callback)(int32_t fd,int32_t err,void *ud);    
 
 typedef struct{
-    handle  base;  
-    void   *ud;
-    void    (*callback)(int32_t fd,int32_t err,void *ud);
+    handle    base;  
+    void     *ud;
+    void      (*callback)(int32_t fd,int32_t err,void *ud);
+    uint32_t  timeout;
+    timer    *t; 
 }connector;
 
-handle *connector_new(int32_t fd,void *ud);    
+handle *connector_new(int32_t fd,void *ud,uint32_t timeout);    
 
 //need not delete,engine will do for you
 
