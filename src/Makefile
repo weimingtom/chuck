@@ -65,7 +65,7 @@ debug:$(source)
 	$(CC) $(SHARED) $(CFLAGS) -c $(source) $(INCLUDE) $(DEFINE) -D_DEBUG
 	ar -rc $(LIBNAME) *.o
 
-test:$(test-source)
+testcase:$(test-source)
 	$(CC) $(CFLAGS) -c $(test-source) $(INCLUDE) $(DEFINE)
 	$(CC) $(CFLAGS) -o testexception testexception.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o testthread testthread.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
@@ -78,6 +78,7 @@ test:$(test-source)
 	$(CC) $(CFLAGS) -o conn_echo_server conn_echo_server.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o conn_broad_server conn_broad_server.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o conn_broad_client conn_broad_client.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
+
 clean:
 	rm *.o
 	rm *.a	
