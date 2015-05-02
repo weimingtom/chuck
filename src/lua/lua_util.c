@@ -16,16 +16,16 @@ static inline int __traceback (lua_State *L) {
 
 static __thread char lua_errmsg[4096];
 const char *luacall(lua_State *L,const char *fmt,...){
-	assert(L);
+	va_list vl;
+	int32_t ret,narg,nres,i,size,base;
+	const char *errmsg = NULL;
+	lua_State *mL;
 	lua_rawgeti(L,  LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
-	lua_State *mL = lua_tothread(L,-1);
+	mL = lua_tothread(L,-1);
 	lua_pop(L,1);
 	if(L != mL) L = mL;	//确保L是主线程
-	va_list vl;
-	int ret,narg,nres,i;
 	va_start(vl,fmt);
-	int size = fmt?strlen(fmt):0;
-	const char *errmsg = NULL;
+	size = fmt?strlen(fmt):0;
 	//压入参数
 	for(narg=0; narg < size; ++narg){
 		switch(*fmt++){
@@ -70,7 +70,7 @@ const char *luacall(lua_State *L,const char *fmt,...){
 arg_end:	
 	nres = fmt?strlen(fmt):0;
 	//插入错误处理函数	
-	int base = lua_gettop(L) - narg;
+	base = lua_gettop(L) - narg;
 	lua_pushcfunction(L, __traceback);
 	lua_insert(L,base);	
 	ret = lua_pcall(L,narg,nres,base);
@@ -129,29 +129,31 @@ end:
 
 
 const char *LuaRef_Get(luaRef tab,const char *fmt,...){
+	int32_t i,size,oldtop,k,v;
+	va_list vl;
+	const char *errmsg = NULL;	
+	lua_State *L = tab.L;		
+
 	assert(tab.L);
 	assert(fmt);
 	assert(tab.rindex != LUA_REFNIL);
-	int i;
-	va_list vl;	
+
 	va_start(vl,fmt);
-	const char *errmsg = NULL;	
-	lua_State *L = tab.L;
-    	int oldtop = lua_gettop(L);
+   	oldtop = lua_gettop(L);
 	lua_rawgeti(L,LUA_REGISTRYINDEX,tab.rindex);
 	if(!lua_istable(L,-1)){
 		snprintf(lua_errmsg,4096,"arg1 is not a lua table");		
 		errmsg = lua_errmsg;
 		goto end;	
 	}
-	int size = strlen(fmt);
+	size = strlen(fmt);
 	if(size < 2){
 		snprintf(lua_errmsg,4096,"fmt invaild(kvkvkv...)");
 		errmsg = lua_errmsg;
 		goto end;		
 	}
 	for(i = 0; i < size; i += 2){	
-		int k = i;	
+		k = i;	
 		switch(fmt[k]){
 			case 'i':{lua_pushinteger(L,va_arg(vl,lua_Integer));break;}
 			case 's':{lua_pushstring(L,va_arg(vl,char*));break;}
@@ -176,7 +178,7 @@ const char *LuaRef_Get(luaRef tab,const char *fmt,...){
 		
 		lua_gettable(L,-2);	
 		//get value
-		int v = k + 1;
+		v = k + 1;
 		switch(fmt[v]){
 			case 'i':{
 				*va_arg(vl,lua_Integer*) = lua_tointeger(L,-1);
@@ -227,19 +229,19 @@ const char *LuaRef_Set(luaRef tab,const char *fmt,...){
 	assert(tab.L);
 	assert(fmt);
 	assert(tab.rindex != LUA_REFNIL);
-	int i;
-	va_list vl;	
-	va_start(vl,fmt);
+	int32_t i,oldtop,size,k,v;
+	va_list vl;
 	const char *errmsg = NULL;	
 	lua_State *L = tab.L;
-    int oldtop = lua_gettop(L);
+	va_start(vl,fmt);
+    oldtop = lua_gettop(L);
 	lua_rawgeti(L,LUA_REGISTRYINDEX,tab.rindex);
 	if(!lua_istable(L,-1)){
 		snprintf(lua_errmsg,4096,"arg1 is not a lua table");		
 		errmsg = lua_errmsg;
 		goto end;	
 	}
-	int size = strlen(fmt);
+	size = strlen(fmt);
 	if(size < 2){
 		snprintf(lua_errmsg,4096,"fmt invaild(kvkvkv...)");
 		errmsg = lua_errmsg;
@@ -247,7 +249,7 @@ const char *LuaRef_Set(luaRef tab,const char *fmt,...){
 	}
 	for(i = 0; i < size; i += 2){
 	   	//push key
-	   	int k = i;	
+	   	k = i;	
 		switch(fmt[k]){
 			case 'i':{lua_pushinteger(L,va_arg(vl,lua_Integer));break;}
 			case 's':{lua_pushstring(L,va_arg(vl,char*));break;}
@@ -277,7 +279,7 @@ const char *LuaRef_Set(luaRef tab,const char *fmt,...){
 			}
 		}
 		//push value
-		int v = k + 1;
+		v = k + 1;
 		switch(fmt[v]){
 			case 'i':{lua_pushinteger(L,va_arg(vl,lua_Integer));break;}
 			case 's':{lua_pushstring(L,va_arg(vl,char*));break;}

@@ -1,5 +1,6 @@
 #include "socket/wrap/connection.h"
 #include "engine/engine.h"
+#include "packet/rawpacket.h"
 
 static int32_t (*base_engine_add)(engine*,struct handle*,generic_callback) = NULL;
 
@@ -305,11 +306,34 @@ connection *connection_new(int32_t fd,uint32_t buffersize,decoder *d)
 		base_engine_add = ((handle*)c)->imp_engine_add; 
 	((handle*)c)->imp_engine_add = imp_engine_add;
 	((socket_*)c)->dctor = connection_dctor;
-	c->decoder_ = d ? d:rawpacket_decoder_new();
+	c->decoder_ = d ? d:conn_raw_decoder_new();
 	decoder_init(c->decoder_,c->next_recv_buf,0);
 	return c;
 }
 
 void connection_close(connection *c){
 	_close(c,0);	
+}
+
+static packet *rawpk_unpack(decoder *d,int32_t *err){
+	rawpacket  *raw;
+	uint32_t    size;
+	if(err) *err = 0;
+	if(!d->size) return NULL;
+
+	raw = rawpacket_new_by_buffer(d->buff,d->pos);
+	size = d->buff->size - d->pos;
+	d->pos  += size;
+	d->size -= size;
+	if(d->pos >= d->buff->cap){
+		d->pos = 0;
+		bytebuffer_set(&d->buff,d->buff->next);
+	}
+	return (packet*)raw;
+}
+
+decoder *conn_raw_decoder_new(){
+	decoder *d = calloc(1,sizeof(*d));
+	d->unpack = rawpk_unpack;
+	return d;	
 }

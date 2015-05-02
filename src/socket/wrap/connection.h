@@ -19,11 +19,8 @@
 #define _CONNECTION_H_
 
 #include "socket/wrap/decoder.h"
-#include "socket/socket.h" 
-
-#define MAX_WBAF 512
-#define MAX_SEND_SIZE 65535
-#define MIN_RECV_BUFSIZE 1024
+#include "socket/socket.h"  
+#include "socket/wrap/wrap_comm.h" 
 
 enum{
     PKEV_RECV,            //recv a packet
@@ -48,6 +45,8 @@ typedef struct connection{
 connection *connection_new(int32_t fd,uint32_t buffersize,decoder *d);
 int32_t     connection_send(connection *c,packet *p,int32_t send_fsh_notify);
 void        connection_close(connection *c);
+
+decoder    *conn_raw_decoder_new();
 
 
 static inline void 

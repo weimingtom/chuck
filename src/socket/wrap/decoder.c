@@ -1,23 +1,5 @@
 #include "socket/wrap/decoder.h"
-#include "packet/rawpacket.h"
 #include "packet/rpacket.h"
-
-static packet *rawpk_unpack(decoder *d,int32_t *err){
-	rawpacket  *raw;
-	uint32_t    size;
-	if(err) *err = 0;
-	if(!d->size) return NULL;
-
-	raw = rawpacket_new_by_buffer(d->buff,d->pos);
-	size = d->buff->size - d->pos;
-	d->pos  += size;
-	d->size -= size;
-	if(d->pos >= d->buff->cap){
-		d->pos = 0;
-		bytebuffer_set(&d->buff,d->buff->next);
-	}
-	return (packet*)raw;
-}
 
 static packet *rpk_unpack(decoder *d,int32_t *err){
 	TYPE_HEAD     pk_len;
@@ -68,12 +50,6 @@ decoder *rpacket_decoder_new(uint32_t max_packet_size){
 	d->unpack = rpk_unpack;
 	d->max_packet_size = max_packet_size;
 	return d;
-}
-
-decoder *rawpacket_decoder_new(){
-	decoder *d = calloc(1,sizeof(*d));
-	d->unpack = rawpk_unpack;
-	return d;	
 }
 
 void decoder_del(decoder *d){

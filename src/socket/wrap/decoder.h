@@ -40,8 +40,6 @@ typedef struct decoder{
 
 decoder *rpacket_decoder_new(uint32_t max_packet_size);
 
-decoder *rawpacket_decoder_new();
-
 void decoder_del(decoder*);
 
 static inline void decoder_init(decoder *d,bytebuffer *buff,uint32_t pos){

@@ -18,6 +18,10 @@
 #ifndef _DATAGRAM_H_
 #define _DATAGRAM_H_
 
+#include "socket/wrap/decoder.h"
+#include "socket/socket.h"  
+#include "socket/wrap/wrap_comm.h"      
+
 typedef struct datagram{
     socket_      base;
     struct       iovec wsendbuf[MAX_WBAF];
@@ -35,6 +39,7 @@ datagram *datagram_new(int32_t fd,uint32_t buffersize,decoder *d);
 int32_t   datagram_send(datagram *d,packet *p,sockaddr_ *addr);
 void      datagram_close(datagram *d);
 
+decoder  *dgram_raw_decoder_new();
 
 
 #endif    
