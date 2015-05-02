@@ -37,6 +37,7 @@ int main(int argc,char **argv){
 		engine_regtimer(e,1000,timer_callback,NULL);
 		engine_run(e);
 	}else{
+		close(fd);
 		printf("server start error\n");
 	}
 	return 0;

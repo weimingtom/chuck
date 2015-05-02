@@ -48,6 +48,7 @@ int main(int argc,char **argv){
 			handle *contor = connector_new(fd,e,2000);
 			engine_add(e,contor,(generic_callback)on_connected);			
 		}else{
+			close(fd);
 			printf("connect to %s %d error\n",argv[1],atoi(argv[2]));
 		}
 	}

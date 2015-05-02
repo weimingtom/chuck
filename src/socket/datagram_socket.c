@@ -114,6 +114,7 @@ handle *new_datagram_socket(int32_t fd){
 	((handle*)s)->on_events = on_events;
 	((handle*)s)->imp_engine_add = imp_engine_add;
 	s->status = SOCKET_DATAGRAM;
+	easy_close_on_exec(fd);
 	return (handle*)s;
 }
 

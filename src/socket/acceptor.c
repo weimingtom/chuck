@@ -51,6 +51,7 @@ handle *acceptor_new(int32_t fd,void *ud){
 	((handle*)a)->fd = fd;
 	((handle*)a)->on_events = process_accept;
 	((handle*)a)->imp_engine_add = imp_engine_add;
+	easy_close_on_exec(fd);
 	return (handle*)a;
 }
 

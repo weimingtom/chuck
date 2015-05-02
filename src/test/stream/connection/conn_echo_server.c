@@ -49,6 +49,7 @@ int main(int argc,char **argv){
 		engine_add(e,tfd,(generic_callback)timer_callback);
 		engine_run(e);
 	}else{
+		close(fd);
 		printf("server start error\n");
 	}
 	return 0;

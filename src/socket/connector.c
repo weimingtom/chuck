@@ -79,5 +79,6 @@ handle *connector_new(int32_t fd,void *ud,uint32_t timeout){
 	((handle*)c)->imp_engine_add = imp_engine_add;
 	c->timeout = timeout;
 	c->ud = ud;
+	easy_close_on_exec(fd);
 	return (handle*)c;
 }
