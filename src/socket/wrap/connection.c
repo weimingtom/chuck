@@ -10,10 +10,8 @@ enum{
 
 static inline void prepare_recv(connection *c){
 	bytebuffer *buf;
-	uint32_t    pos;
 	int32_t     i = 0;
-	uint32_t    free_buffer_size;
-	uint32_t    recv_size;
+	uint32_t    free_buffer_size,recv_size,pos;
 	if(!c->next_recv_buf){
 		c->next_recv_buf = bytebuffer_new(c->recv_bufsize);
 		c->next_recv_pos = 0;
@@ -143,10 +141,8 @@ static inline iorequest *prepare_send(connection *c)
 	int32_t     i = 0;
 	packet     *w = (packet*)list_begin(&c->send_list);
 	bytebuffer *b;
-	uint32_t pos;
 	iorequest * O = NULL;
-	uint32_t    buffer_size = 0;
-	uint32_t    size = 0;
+	uint32_t    buffer_size,size,pos;
 	uint32_t    send_size_remain = MAX_SEND_SIZE;
 	while(w && i < MAX_WBAF && send_size_remain > 0)
 	{
