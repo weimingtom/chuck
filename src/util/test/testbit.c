@@ -13,5 +13,18 @@ int main(){
 	bitset_show(&d,sizeof(d)*8);
 	bitset_show(&e,sizeof(e)*8);
 	bitset_show(&f,sizeof(f)*8);
+
+	bitset *bb = bitset_new(32);
+
+	bitset_set(bb,1);
+
+	bitset_set(bb,3);
+
+	bitset_set(bb,4);
+
+	bitset_clear(bb,3);
+
+	bitset_show(bb->bits,32);
+
 	return 0;
 };

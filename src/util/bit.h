@@ -57,7 +57,7 @@ static inline void bitset_clear(bitset *bs,uint32_t index)
 	if(index <= bs->size){
 		uint32_t b_index = index / (sizeof(uint32_t)*8);
 		index %= (sizeof(uint32_t)*8);
-		bs->bits[b_index] = bs->bits[b_index] & (~(1 << index));
+		bs->bits[b_index] = bs->bits[b_index] ^ (1<<index);
 	}
 }
 

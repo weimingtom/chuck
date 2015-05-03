@@ -47,23 +47,14 @@ static inline void PostRecv(connection *c){
 	stream_socket_recv((handle*)c,&c->recv_overlap,IO_POST);		
 }
 
-static inline int32_t Recv(connection *c,int32_t *err){
-	int32_t ret;
+static inline int32_t Recv(connection *c){
 	prepare_recv(c);
-	if(err) *err = 0;
-	ret = stream_socket_recv((handle*)c,&c->recv_overlap,IO_NOW);		
-	if(ret < 0 && err)
-		*err = -ret;
-	return ret; 
+	return stream_socket_recv((handle*)c,&c->recv_overlap,IO_NOW);		
 }
 
-static inline int32_t Send(connection *c,int32_t *err,int32_t flag){
-	int32_t ret;
-	if(err) *err = 0;
-	ret = stream_socket_send((handle*)c,&c->send_overlap,flag);		
-	if(ret < 0 && err)
-		*err = -ret;
-	if(flag == IO_POST || -ret == EAGAIN)
+static inline int32_t Send(connection *c,int32_t flag){
+	int32_t ret = stream_socket_send((handle*)c,&c->send_overlap,flag);		
+	if(ret < 0 && -ret == EAGAIN)
 		((socket_*)c)->status |= SENDING;
 	return ret; 
 }
@@ -127,8 +118,8 @@ static void RecvFinish(connection *c,int32_t bytestransfer,int32_t err_code)
 				PostRecv(c);
 				return;
 			}else{
-				bytestransfer = Recv(c,&err_code);
-				if(bytestransfer < 0 && err_code == EAGAIN) 
+				bytestransfer = Recv(c);
+				if(bytestransfer < 0 && (err_code = -bytestransfer) == EAGAIN) 
 					return;
 				else if(bytestransfer > 0)
 					total_recv += bytestransfer;
@@ -210,32 +201,16 @@ static inline void update_send_list(connection *c,int32_t _bytestransfer)
 }
 
 
-static void SendFinish(connection *c,int32_t bytestransfer,int32_t err_code)
+static void SendFinish(connection *c,int32_t bytestransfer)
 {
-	int32_t total_send = 0;
-	if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN)){
-		_close(c,err_code);
-	}else{		
-		for(;;){
-			update_send_list(c,bytestransfer);
-			if(((socket_*)c)->status & SOCKET_CLOSE)
-					return;
-			if(!prepare_send(c)) {
-				((socket_*)c)->status ^= SENDING;
-				return;
-			}
-			if(total_send > c->recv_bufsize){
-				Send(c,&err_code,IO_POST);
-			}else{
-				bytestransfer = Send(c,&err_code,IO_NOW);
-				if(bytestransfer < 0 && err_code == EAGAIN) 
-					return;
-				else if(bytestransfer > 0){
-					total_send += bytestransfer;
-				}
-			}
-		}	
+	update_send_list(c,bytestransfer);
+	if(((socket_*)c)->status & SOCKET_CLOSE)
+			return;
+	if(!prepare_send(c)) {
+		((socket_*)c)->status ^= SENDING;
+		return;
 	}
+	Send(c,IO_POST);		
 }
 
 static void IoFinish(handle *sock,void *_,int32_t bytestransfer,int32_t err_code)
@@ -244,8 +219,8 @@ static void IoFinish(handle *sock,void *_,int32_t bytestransfer,int32_t err_code
 	connection *c  = (connection*)sock;
 	if(((socket_*)c)->status & SOCKET_CLOSE)
 		return;
-	if(io == (iorequest*)&c->send_overlap)
-		SendFinish(c,bytestransfer,err_code);
+	if(io == (iorequest*)&c->send_overlap && bytestransfer > 0)
+		SendFinish(c,bytestransfer);
 	else if(io == (iorequest*)&c->recv_overlap)
 		RecvFinish(c,bytestransfer,err_code);
 	else{
@@ -269,6 +244,7 @@ static int32_t imp_engine_add(engine *e,handle *h,generic_callback callback){
 }
 
 int32_t connection_send(connection *c,packet *p,int32_t send_fsh_notify){
+	int32_t ret;
 	if(p->type != WPACKET && p->type != RAWPACKET){
 		packet_del(p);
 		return -EINVIPK;
@@ -277,7 +253,12 @@ int32_t connection_send(connection *c,packet *p,int32_t send_fsh_notify){
 	list_pushback(&c->send_list,(listnode*)p);
 	if(!(((socket_*)c)->status & SENDING)){
 		prepare_send(c);
-		return Send(c,NULL,IO_POST);
+		ret = Send(c,IO_NOW);
+		if(ret < 0 && ret == -EAGAIN) 
+			return -EAGAIN;
+		else if(ret > 0)
+			update_send_list(c,ret);
+		return ret;
 	}
 	return -EAGAIN;
 }
