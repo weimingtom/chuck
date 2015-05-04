@@ -51,6 +51,10 @@ test-source = test/testexception.c\
 			  test/stream/tcp_echoclient.c\
 			  test/datagram/udp_echoserver.c\
 			  test/datagram/udp_echoclient.c\
+			  test/datagram/datagram/dgram_raw_server.c\
+			  test/datagram/datagram/dgram_raw_client.c\
+			  test/datagram/datagram/dgram_rpk_server.c\
+			  test/datagram/datagram/dgram_rpk_client.c\
 			  test/testpacket.c\
 			  test/testdecoder.c\
 			  test/stream/connection/conn_echo_server.c\
@@ -78,7 +82,10 @@ testcase:$(test-source)
 	$(CC) $(CFLAGS) -o conn_echo_server conn_echo_server.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o conn_broad_server conn_broad_server.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o conn_broad_client conn_broad_client.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
-
+	$(CC) $(CFLAGS) -o dgram_raw_server dgram_raw_server.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
+	$(CC) $(CFLAGS) -o dgram_raw_client dgram_raw_client.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
+	$(CC) $(CFLAGS) -o dgram_rpk_server dgram_rpk_server.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
+	$(CC) $(CFLAGS) -o dgram_rpk_client dgram_rpk_client.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 clean:
 	rm *.o
 	rm *.a	

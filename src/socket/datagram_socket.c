@@ -107,7 +107,13 @@ static void on_events(handle *h,int32_t events){
 		close(h->fd);
 		free(h);		
 	}
-}	
+}
+
+void    construct_datagram_socket(socket_ *s){
+	((handle*)s)->on_events = on_events;
+	((handle*)s)->imp_engine_add = imp_engine_add;
+	s->status = SOCKET_DATAGRAM;	
+}		
 
 handle *new_datagram_socket(int32_t fd){
 	socket_ *s = calloc(1,sizeof(*s));

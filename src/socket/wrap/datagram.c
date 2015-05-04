@@ -176,12 +176,14 @@ static packet *rawpk_unpack(decoder *d,int32_t *err){
 	rawpacket    *raw;
 	uint32_t      size;
 	buffer_writer writer;
-	bytebuffer   *buff = d->buff;
+	bytebuffer   *buff;
 	if(err) *err = 0;
 	if(!d->size) return NULL;
 	raw = rawpacket_new(d->size);
-	buffer_writer_init(&writer,((packet*)raw)->head,d->pos);
+	buffer_writer_init(&writer,((packet*)raw)->head,0);
+	((packet*)raw)->len_packet = d->size;
 	while(d->size){
+		buff = d->buff;
 		size = buff->size - d->pos;
 		buffer_write(&writer,buff->data + d->pos,size);
 		d->size -= size;

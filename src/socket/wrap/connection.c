@@ -306,6 +306,7 @@ static packet *rawpk_unpack(decoder *d,int32_t *err){
 	size = d->buff->size - d->pos;
 	d->pos  += size;
 	d->size -= size;
+	((packet*)raw)->len_packet = size;
 	if(d->pos >= d->buff->cap){
 		d->pos = 0;
 		bytebuffer_set(&d->buff,d->buff->next);
