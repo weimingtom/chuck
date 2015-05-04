@@ -1,6 +1,6 @@
 CFLAGS = -g -Wall -fno-strict-aliasing 
 LDFLAGS = -lpthread -lrt -lm
-SHARED  = -fPIC
+SHARED  = -fPIC -shared
 DEPDIR  = 
 INCLUDE = -I./ -I../deps/lua-5.3.0/src
 DEFINE  =
@@ -30,6 +30,7 @@ source =  util/exception.c\
 		  packet/rpacket.c\
 		  packet/packet.c\
 		  packet/rawpacket.c\
+		  packet/luapacket.c\
 		  thread/thread.c\
 		  thread/spinlock.c\
 		  socket/socket.c\
@@ -43,6 +44,7 @@ source =  util/exception.c\
 		  socket/wrap/datagram.c\
 		  engine/engine.c\
 		  lua/lua_util.c\
+		  lua/lua_util_packet.c\
 		  mem/obj_allocator.c	  
 
 test-source = test/testexception.c\
@@ -86,6 +88,14 @@ testcase:$(test-source)
 	$(CC) $(CFLAGS) -o dgram_raw_client dgram_raw_client.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o dgram_rpk_server dgram_rpk_server.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
 	$(CC) $(CFLAGS) -o dgram_rpk_client dgram_rpk_client.o $(LIBNAME) $(INCLUDE) $(LDFLAGS) $(DEFINE)
+
+
+chucklua:$(source)
+	rm *.o
+	$(CC) $(SHARED) $(CFLAGS) -c luachuck.c $(source) $(INCLUDE) $(DEFINE) -D_DEBUG
+	$(CC) $(CFLAGS) $(SHARED) -o chuck.so *.o $(LDFLAGS)
+
+
 clean:
 	rm *.o
 	rm *.a	
