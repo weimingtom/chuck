@@ -271,7 +271,7 @@ static int32_t lua_new_rawpacket(lua_State *L){
 		luapacket *p = (luapacket*)lua_newuserdata(L, sizeof(*p));
 		luaL_getmetatable(L, LUAPACKET_METATABLE);
 		lua_setmetatable(L, -2);
-		p->_packet = make_writepacket(other->_packet);
+		p->_packet = clone_packet(other->_packet);
 		return 1;							
 	}else
 		return luaL_error(L,"invaild opration for arg1");	
