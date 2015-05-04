@@ -20,7 +20,6 @@ endif
 
 
 source =  util/exception.c\
-		  util/time.c\
 		  util/minheap.c\
 		  util/timewheel.c\
 		  util/log.c\
