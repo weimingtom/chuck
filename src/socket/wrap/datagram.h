@@ -30,7 +30,7 @@ typedef struct datagram{
     uint32_t     next_recv_pos;
     bytebuffer  *next_recv_buf;        
     uint32_t     recv_bufsize;
-    void         (*on_packet)(struct datagram*,packet*);
+    void         (*on_packet)(struct datagram*,packet*,sockaddr_*);
     decoder     *decoder_;
 }datagram;
 
