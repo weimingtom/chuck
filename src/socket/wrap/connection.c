@@ -262,7 +262,6 @@ int32_t connection_send(connection *c,packet *p,int32_t send_fsh_notify){
 
 void connection_dctor(void *_)
 {
-	printf("connection_dctor\n");
 	connection *c = (connection*)_;
 	packet *p;
 	if(c->on_disconnected)
@@ -336,7 +335,6 @@ decoder *conn_raw_decoder_new(){
 
 void lua_connection_dctor(void *_)
 {
-	printf("lua_connection_dctor\n");
 	connection *c = (connection*)_;
 	packet *p;
 	while((p = (packet*)list_pop(&c->send_list))!=NULL)

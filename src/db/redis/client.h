@@ -35,7 +35,7 @@ typedef struct redisReply {
 
 handle *redis_connect(engine *e,sockaddr_ *addr,void (*on_disconnect)(handle*,int32_t err));
 void    redis_close(handle *);
-int32_t redis_query(handle*,void (*)(redisReply*,void *ud),void *ud);
+int32_t redis_query(handle*,const char *str,void (*)(redisReply*,void *ud),void *ud);
 
 
 #endif    
