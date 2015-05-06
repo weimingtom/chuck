@@ -21,28 +21,12 @@ typedef struct{
 	void    *ud;
 }reply_cb;
 
-
-//解包器接口
-typedef struct{
-	decoder       base;
-	redisReply   *root;
-	redisReply   *parent;
-	redisReply   *current;    
-    char         *linebuff;
-    uint32_t      linebuff_pos;
-    uint32_t      linebuff_size;
-    uint32_t      linebuff_cap;
-	uint32_t      want;
-	char          type;    
-}redis_decoder;
-
 typedef struct redis_conn{
     socket_      		base;
+    struct       		iovec wrecvbuf[1];
+    char         		recvbuf[RECV_BUFFSIZE];
     reply_parse_context context; 
     struct       		iovec wsendbuf[MAX_WBAF];
-    struct       		iovec wrecvbuf[2];
-    uint32_t     		next_recv_pos;
-    bytebuffer  	   *next_recv_buf;     
     iorequest    		send_overlap;
     iorequest    		recv_overlap;       
     list         		send_list;
@@ -137,30 +121,6 @@ packet *build_request(const char *cmd){
 #define MBREPLY '*'    //多条批量回复（multi bulk reply）
 
 
-static packet *redis_parse(redis_decoder *d,redisReply *parent){
-	if(!d->type){
-		if(((decoder_*)d)->size < 1)
-			return NULL;
-	}else{
-		
-	}
-}
-
-
-static packet *redis_unpack(decoder *_,int32_t *err){
-	redis_decoder *d = (redis_decoder*)_;
-	if(!_->size) return NULL;		
-	if(!d->root){
-		d->root    = calloc(1,sizeof(d->root));
-		d->current = d->root;
-		d->parent  = NULL; 
-	}
-	if(!d->current)
-		d->current = calloc(1,sizeof(d->current));
-	return redis_parse(d,d->parent);
-}
-
-
 handle *redis_connect(engine *e,sockaddr_ *addr,void (*on_disconnect)(handle*,int32_t err))
 {
 	int32_t fd = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
@@ -178,55 +138,10 @@ handle *redis_connect(engine *e,sockaddr_ *addr,void (*on_disconnect)(handle*,in
 }
 
 static inline void prepare_recv(redis_conn *c){
-	bytebuffer *buf;
-	int32_t     i = 0;
-	uint32_t    free_buffer_size,recv_size,pos;
-	if(!c->next_recv_buf){
-		c->next_recv_buf = bytebuffer_new(c->recv_bufsize);
-		c->next_recv_pos = 0;
-	}
-	buf = c->next_recv_buf;
-	pos = c->next_recv_pos;
-	recv_size = c->recv_bufsize;
-	do
-	{
-		free_buffer_size = buf->cap - pos;
-		free_buffer_size = recv_size > free_buffer_size ? free_buffer_size:recv_size;
-		c->wrecvbuf[i].iov_len = free_buffer_size;
-		c->wrecvbuf[i].iov_base = buf->data + pos;
-		recv_size -= free_buffer_size;
-		pos += free_buffer_size;
-		if(recv_size && pos >= buf->cap)
-		{
-			pos = 0;
-			if(!buf->next)
-				buf->next = bytebuffer_new(c->recv_bufsize);
-			buf = buf->next;
-		}
-		++i;
-	}while(recv_size);
-	c->recv_overlap.iovec_count = i;
+	c->wrecvbuf[0].iov_len = RECV_BUFFSIZE;
+	c->wrecvbuf[0].iov_base = c->recvbuf;	
+	c->recv_overlap.iovec_count = 1;
 	c->recv_overlap.iovec = c->wrecvbuf;
-}
-
-static inline void update_next_recv_pos(redis_conn *c,int32_t _bytestransfer)
-{
-	assert(_bytestransfer >= 0);
-	uint32_t bytestransfer = (uint32_t)_bytestransfer;
-	uint32_t size;
-	decoder_update(c->decoder_,c->next_recv_buf,c->next_recv_pos,bytestransfer);
-	do{
-		size = c->next_recv_buf->cap - c->next_recv_pos;
-		size = size > bytestransfer ? bytestransfer:size;
-		c->next_recv_buf->size += size;
-		c->next_recv_pos += size;
-		bytestransfer -= size;
-		if(c->next_recv_pos >= c->next_recv_buf->cap)
-		{
-			bytebuffer_set(&c->next_recv_buf,c->next_recv_buf->next);
-			c->next_recv_pos = 0;
-		}
-	}while(bytestransfer);
 }
 
 static inline int32_t Send(redis_conn *c,int32_t flag){
