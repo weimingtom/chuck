@@ -289,3 +289,60 @@ redis_conn *redis_connect(engine *e,sockaddr_ *addr,void (*on_disconnect)(redis_
 	PostRecv(conn);
 	return conn;
 }
+
+//just for test
+
+static parse_tree *test_tree = NULL;
+
+
+static void show_reply(redisReply *reply){
+	switch(reply->type){
+		case REDIS_REPLY_STATUS:
+		case REDIS_REPLY_ERROR:
+		case REDIS_REPLY_STRING:
+		{
+			printf("%s\n",reply->str);
+			break;
+		}
+		case REDIS_REPLY_INTEGER:
+		{
+			printf("%ld\n",reply->integer);
+			break;
+		}
+		case REDIS_REPLY_ARRAY:{
+			size_t i;
+			for(i=0; i < reply->elements;++i){
+				show_reply(reply->element[i]);
+			}
+			break;
+		}
+		case REDIS_REPLY_NIL:{
+			printf("nil\n");
+			break;
+		} 
+		default:{
+			break;
+		}
+	}
+}
+
+void 
+test_parse_reply(char *str){
+	int32_t parse_ret;
+	do{
+		if(!test_tree) test_tree = parse_tree_new();
+		parse_ret = parse(test_tree,&str);
+		if(parse_ret == REDIS_OK){
+			show_reply(test_tree->reply);
+			parse_tree_del(test_tree);
+			test_tree = NULL;
+		}else if(parse_ret == REDIS_ERR){
+			//error
+			parse_tree_del(test_tree);
+			test_tree = NULL;
+			printf("parse error\n");
+			return;
+		}else
+			break;
+	}while(1);
+}

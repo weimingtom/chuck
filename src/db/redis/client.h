@@ -57,5 +57,8 @@ redis_query(redis_conn*,const char *str,
             void (*)(redis_conn*,redisReply*,void *ud),
             void *ud);
 
+void 
+test_parse_reply(char *str);
+
 
 #endif    

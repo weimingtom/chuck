@@ -33,7 +33,7 @@ void show_reply(redisReply *reply){
 			}
 			break;
 		}
-		case REDIS_REPLY_ARRAY:{
+		case REDIS_REPLY_NIL:{
 			printf("nil\n");
 			break;
 		} 
@@ -51,11 +51,21 @@ void cmd_callback(redis_conn *conn,redisReply *reply,void *ud){
 
 
 int main(int argc,char **argv){
+	test_parse_reply(":1");
+	test_parse_reply("0\r");
+	test_parse_reply("\n");
 
-	if(argc < 3){
-		printf("usage redisclient ip port\n");
-		return 0;
-	}
+	test_parse_reply(":10");
+	test_parse_reply("\r");
+	test_parse_reply("\n");
+
+	test_parse_reply(":");
+	test_parse_reply("10\r");
+	test_parse_reply("\n");
+
+	test_parse_reply("");
+	test_parse_reply(":10\r");
+	test_parse_reply("\n");				
 
 	char  input[65535];
 	char *ptr;
@@ -63,7 +73,7 @@ int main(int argc,char **argv){
 	signal(SIGPIPE,SIG_IGN);
 	engine *e = engine_new();
 	sockaddr_ server;
-	easy_sockaddr_ip4(&server,argv[1],atoi(argv[2]));
+	easy_sockaddr_ip4(&server,"127.0.0.1",6379);
 	redis_client = redis_connect(e,&server,on_disconnect);
 	if(!redis_client){
 		printf("connect to redis server %s:%u error\n",argv[1],atoi(argv[2]));
