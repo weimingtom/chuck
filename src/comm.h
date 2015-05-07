@@ -300,6 +300,7 @@ enum{
     EASSENG,                    /*already associate*/
     EINVIPK,                    /*invaild packet type*/
     EACTCLOSE,                  /*active close*/
+    ERDISPERROR,                /*redis reply error*/
 };
     
 #endif

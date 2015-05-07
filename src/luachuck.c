@@ -164,6 +164,8 @@ void lua_regerrcode(lua_State *L){
 	SET_CONST(L,EASSENG);
 	SET_CONST(L,EINVIPK);
 	SET_CONST(L,EACTCLOSE);
+	SET_CONST(L,ERDISPERROR);
+	
 	
 }
 

@@ -6,8 +6,9 @@
 #include "util/bytebuffer.h"
 #include "packet/rawpacket.h"
 #include "socket/socket_helper.h"
-
-static int32_t (*base_engine_add)(engine*,struct handle*,generic_callback) = NULL;
+#include "db/redis/protocol.h"
+#include "socket/wrap/wrap_comm.h"
+#include "engine/engine.h"
 
 enum{
 	SENDING   = SOCKET_END << 2,
@@ -17,135 +18,46 @@ enum{
 
 typedef struct{
 	listnode node;
-	void     (*cb)(redisReply*,void *ud)
+	void     (*cb)(redisReply*,void *ud);
 	void    *ud;
 }reply_cb;
 
 typedef struct redis_conn{
-    socket_      		base;
+    stream_socket_      base;
     struct       		iovec wrecvbuf[1];
-    char         		recvbuf[RECV_BUFFSIZE];
-    reply_parse_context context; 
+    char         		recvbuf[RECV_BUFFSIZE]; 
     struct       		iovec wsendbuf[MAX_WBAF];
     iorequest    		send_overlap;
     iorequest    		recv_overlap;       
     list         		send_list;
     list         		waitreplys;
-    void         		(*on_disconnected)(struct redis_conn*,int32_t err);
+    parse_tree         *tree;
+    void         	    (*on_disconnected)(struct redis_conn*,int32_t err);
 }redis_conn;
 
-
-typedef struct{
-	listnode node;
-	char    *buff;
-	size_t   b;
-	size_t   e;
-}word;
-
-
-
-rawpacket *convert(list *l,size_t space){
-	char  tmp[32];
-	char  c;
-	char *end = "\r\n";
-	word *w;
-	buffer_writer writer;
-	bytebuffer *buffer;
-	rawpacket *p;	
-	space += sprintf(tmp,"%u",list_size(l)) + 3;//plus head *,tail \r\n
-	buffer = bytebuffer_new(space);
-	buffer_writer_init(&writer,buffer,0);
-	//write the head;
-	c = '*';
-	buffer_write(&writer,&c,sizeof(c));
-	buffer_write(&writer,tmp,strlen(tmp));
-	buffer_write(&writer,end,2);
-
-	c = '$';
-	while(NULL != (w = (word*)list_pop(l))){
-		sprintf(tmp,"%u",w->e - w->b);
-		buffer_write(&writer,&c,sizeof(c));	
-		buffer_write(&writer,tmp,strlen(tmp));
-		buffer_write(&writer,end,2);
-
-		buffer_write(&writer,w->buff+w->b,w->e - w->b);
-		buffer_write(&writer,end,2);
-
-		free(w);
-	}
-	buffer_write(&writer,&c,sizeof(c));
-	p = rawpacket_new_by_buffer(buffer,0);
-	refobj_dec((refobj*)buffer);
-	return p;
-}
-
-
-packet *build_request(const char *cmd){
-	list l;
-	list_init(&l);
-	char  tmp[32];
-	size_t len   = strlen(cmd);
-	word  *w = NULL;
-	size_t i,j,space;
-	i = j = space = 0;
-	for(; i < len; ++i){
-		if(cmd[i] != ' '){
-			if(!w){ 
-				w = calloc(1,sizeof(*w));
-				w->b = i;
-				w->buff = request;
-			}
-		}else{
-			if(w){
-				//word finish
-				w->e = i;
-				space += (sprintf(tmp,"%u",(w->e - w->b)) + 3);//plus head $,tail \r\n
-				space += (w->e - w->b) + 2;//plus tail \r\n
-				list_pushback(&l,(listnode*)w);	
-				w = NULL;
-				--i;
-			}
-		}
-	}
-	w->e = i;
-	space += (sprintf(tmp,"%u",(w->e - w->b)) + 3);//plus head $,tail \r\n
-	space += (w->e - w->b) + 2;//plus tail \r\n
-	list_pushback(&l,(listnode*)w);
-	return (packet*)convert(&l,space);
-}
-
-#define STATUS  '+'    //状态回复（status reply）
-#define ERROR   '-'    //错误回复（error reply）
-#define IREPLY  ':'    //整数回复（integer reply）
-#define BREPLY  '$'    //批量回复（bulk reply）
-#define MBREPLY '*'    //多条批量回复（multi bulk reply）
-
-
-handle *redis_connect(engine *e,sockaddr_ *addr,void (*on_disconnect)(handle*,int32_t err))
+void redis_dctor(void *_)
 {
-	int32_t fd = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
-	if(fd < 0) return NULL;
-	if(0 != easy_connect(fd,addr,NULL)){
-		close(fd);
-		return NULL;
-	}
-
-	redis_conn *conn = calloc(1,sizeof(*conn));
-	((handle*)conn)->fd = fd;
-	construct_stream_socket(&conn->base);
-
-	return (handle*)conn;
+	redis_conn *c = (redis_conn*)_;
+	packet *p;
+	if(c->on_disconnected)
+		c->on_disconnected(c,0);	
+	while((p = (packet*)list_pop(&c->send_list))!=NULL)
+		packet_del(p);
+	if(c->tree)
+		parse_tree_del(c->tree);
+	free(c);
 }
+
 
 static inline void prepare_recv(redis_conn *c){
-	c->wrecvbuf[0].iov_len = RECV_BUFFSIZE;
+	c->wrecvbuf[0].iov_len = RECV_BUFFSIZE-1;
 	c->wrecvbuf[0].iov_base = c->recvbuf;	
 	c->recv_overlap.iovec_count = 1;
 	c->recv_overlap.iovec = c->wrecvbuf;
 }
 
 static inline int32_t Send(redis_conn *c,int32_t flag){
-	int32_t ret = stream_socket_send((handle*)c,&c->send_overlap,flag);		
+	int32_t ret = stream_socket_send((stream_socket_*)c,&c->send_overlap,flag);		
 	if(ret < 0 && -ret == EAGAIN)
 		((socket_*)c)->status |= SENDING;
 	return ret; 
@@ -153,12 +65,12 @@ static inline int32_t Send(redis_conn *c,int32_t flag){
 
 static inline void PostRecv(redis_conn *c){
 	prepare_recv(c);
-	stream_socket_recv((handle*)c,&c->recv_overlap,IO_POST);		
+	stream_socket_recv((stream_socket_*)c,&c->recv_overlap,IO_POST);		
 }
 
 static inline int32_t Recv(redis_conn *c){
 	prepare_recv(c);
-	return stream_socket_recv((handle*)c,&c->recv_overlap,IO_NOW);		
+	return stream_socket_recv((stream_socket_*)c,&c->recv_overlap,IO_NOW);		
 }
 
 static inline iorequest *prepare_send(redis_conn *c)
@@ -241,19 +153,43 @@ static void SendFinish(redis_conn *c,int32_t bytestransfer)
 	Send(c,IO_POST);		
 }
 
+static inline void _close(redis_conn *c,int32_t err){
+	((socket_*)c)->status |= SOCKET_CLOSE;
+	engine_remove((handle*)c);
+	if(c->on_disconnected){
+		c->on_disconnected(c,err);
+		c->on_disconnected = NULL;
+	}
+}
+
 static void RecvFinish(redis_conn *c,int32_t bytestransfer,int32_t err_code)
 {
 	int32_t total_recv = 0;
+	int32_t parse_ret;
 	do{	
 		if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN)){
 			_close(c,err_code);
 			return;	
 		}else if(bytestransfer > 0){
-
-			if(0 != process_reply(c))
+			c->recvbuf[bytestransfer] = 0;
+			if(!c->tree) c->tree = parse_tree_new();
+			parse_ret = parse(c->tree,c->recvbuf);
+			if(parse_ret == 0){
+				reply_cb *stcb = (reply_cb*)list_pop(&c->waitreplys);
+				if(stcb->cb)
+					stcb->cb(c->tree->reply,stcb->ud);
+				free(stcb);
+				parse_tree_del(c->tree);
+				c->tree = NULL;
+			}else if(parse_ret == -2){
+				//error
+				parse_tree_del(c->tree);
+				c->tree = NULL;
+				_close(c,ERDISPERROR);
 				return;
+			}
 
-			if(total_recv >= c->recv_bufsize){
+			if(total_recv >= RECV_BUFFSIZE){
 				PostRecv(c);
 				return;
 			}else{
@@ -280,8 +216,9 @@ static void IoFinish(handle *sock,void *_,int32_t bytestransfer,int32_t err_code
 }
 
 
-int32_t redis_query(handle *h,const char *str,void (*cb)(redisReply*,void *ud),void *ud){
-	redis_conn *conn = (redis_conn*)h;
+int32_t redis_query(redis_conn *conn,const char *str,void (*cb)(redisReply*,void *ud),void *ud){
+	handle *h = (handle*)conn;
+	int32_t ret;
 	if(((socket_*)h)->status & SOCKET_CLOSE)
 		return -ESOCKCLOSE;
 	if(!h->e)
@@ -297,10 +234,33 @@ int32_t redis_query(handle *h,const char *str,void (*cb)(redisReply*,void *ud),v
 	if(!(((socket_*)conn)->status & SENDING)){
 		prepare_send(conn);
 		ret = Send(conn,IO_NOW);
-		if(ret < 0 && ret == -EAGAIN) 
-			return -EAGAIN;
-		else if(ret > 0)
+		if(ret > 0)
 			update_send_list(conn,ret);
-		return ret;
 	}
+	if(ret == -EAGAIN || ret > 0)
+		return 0;
+	return ret;
+}
+
+void redis_close(redis_conn *c){
+	if(((socket_*)c)->status & SOCKET_RELEASE)
+		return;
+	close_socket((socket_*)c);
+}
+
+redis_conn *redis_connect(engine *e,sockaddr_ *addr,void (*on_disconnect)(redis_conn*,int32_t err))
+{
+	int32_t fd = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
+	if(fd < 0) return NULL;
+	if(0 != easy_connect(fd,addr,NULL)){
+		close(fd);
+		return NULL;
+	}
+	redis_conn *conn = calloc(1,sizeof(*conn));
+	((handle*)conn)->fd = fd;
+	construct_stream_socket(&conn->base);
+	((socket_*)conn)->dctor = redis_dctor;	
+	engine_associate(e,conn,IoFinish); 	
+	PostRecv(conn);
+	return conn;
 }
