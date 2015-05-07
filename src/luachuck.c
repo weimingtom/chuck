@@ -21,7 +21,9 @@
 
 
 
-void lua_regerrcode(lua_State *L){
+void 
+lua_regerrcode(lua_State *L)
+{
 
 	lua_newtable(L);
 
@@ -169,17 +171,23 @@ void lua_regerrcode(lua_State *L){
 	
 }
 
-int32_t lua_get_bytebuffer_count(lua_State *L){
+int32_t 
+lua_get_bytebuffer_count(lua_State *L)
+{
 	lua_pushinteger(L,bytebuffer_count);
 	return 1;
 }
 
-int32_t lua_systick(lua_State *L){
+int32_t 
+lua_systick(lua_State *L)
+{
 	lua_pushinteger(L,systick64());
 	return 1;
 }
 
-int32_t luaopen_chuck(lua_State *L){
+int32_t 
+luaopen_chuck(lua_State *L)
+{
 	
 	lua_newtable(L);
 	

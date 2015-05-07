@@ -34,39 +34,45 @@ typedef struct parse_tree{
 	char   				tmp_buff[SIZE_TMP_BUFF]; 	 	
 }parse_tree;
 
-static int32_t parse_status(parse_tree *current,const char **str){
+static int32_t 
+parse_status(parse_tree *current,char **str)
+{
 	redisReply *reply = current->reply;
 	while(**str != '\r') {
 		if(**str != '\n' && **str != '\0')
         	current->tmp_buff[current->pos++] = *(*str)++;
         if(**str == '\0')
-        	return -1;
+        	return REDIS_RETRY;
     }
 
 	current->tmp_buff[current->pos] = 0;
 	reply->str = current->tmp_buff;
 	current->pos = 0;
-	return 0;
+	return REDIS_OK;
 }
 
 
-static int32_t parse_error(parse_tree *current,const char **str){
+static int32_t 
+parse_error(parse_tree *current,char **str)
+{
 	redisReply *reply = current->reply;
 	while(**str != '\r') {
 		if(**str != '\n' && **str != '\0')
         	current->tmp_buff[current->pos++] = *(*str)++;
         if(**str == '\0')
-        	return -1;       
+        	return REDIS_RETRY;       
     }
 
 	current->tmp_buff[current->pos] = 0;
 	reply->str = current->tmp_buff;
 	current->pos = 0;
-	return 0;
+	return REDIS_OK;
 }
 
 
-static int32_t parse_integer(parse_tree *current,const char **str){
+static int32_t 
+parse_integer(parse_tree *current,char **str)
+{
 	redisReply *reply = current->reply;	
 	while(**str != '\r') {
 		if(**str == '-'){
@@ -77,26 +83,40 @@ static int32_t parse_integer(parse_tree *current,const char **str){
 		if(**str != '\n' && **str != '\0')
         	reply->integer = (reply->integer*10)+(*(*str)++ - '0');
         if(**str == '\0')
-        	return -1;
+        	return REDIS_RETRY;
     }
     if(current->want == -1)
     	reply->integer *= -1;    
-    return 0;
+    return REDIS_OK;
 }
 
 
-static int32_t parse_breply(parse_tree *current,const char **str){
+static int32_t 
+parse_breply(parse_tree *current,char **str)
+{
 	redisReply *reply = current->reply;
 	if(!current->want){
 		while(**str != '\r'){
-			if(**str != ':' && **str != '\n' && **str != '\0')
-	        	reply->len = (reply->len*10)+(**str - '0');
+			if(**str == '-'){
+				reply->len = -1;
+		    	(*str)++;
+		    	continue;
+			}	
+			if(**str != '\n' && **str != '\0'){
+	        	if(reply->len != -1)
+	        		reply->len = (reply->len*10)+(**str - '0');
+			}
 	        if(**str == '\0')
-	        	return -1;
+	        	return REDIS_RETRY;
 	        ++(*str);
 	    }
 	    ++(*str);
 	    current->want = reply->len;
+	}
+
+	if(reply->len == -1){
+		reply->type = REDIS_REPLY_NIL;
+		return REDIS_OK;
 	}
 	if(!reply->str){
 		if(reply->len + 1 <= SIZE_TMP_BUFF)
@@ -110,22 +130,24 @@ static int32_t parse_breply(parse_tree *current,const char **str){
 		if(**str != '\n' && **str != '\0')
 			reply->str[current->pos++] = **str;
 		if(**str == '\0')
-			return -1;
+			return REDIS_RETRY;
 		++(*str);
 	}
 	reply->str[reply->len] = 0;
-	return 0;  
+	return REDIS_OK;  
 }
 
-static int32_t _parse(parse_tree *current,const char **str);
-
-static parse_tree *parse_tree_new(){
+static parse_tree*
+parse_tree_new()
+{
 	parse_tree *tree = calloc(1,sizeof(*tree));
 	tree->reply = calloc(1,sizeof(*tree->reply));
 	return tree;
 }
 
-static void parse_tree_del(parse_tree *tree){
+static void 
+parse_tree_del(parse_tree *tree)
+{
 	size_t i;
 	if(tree->childs){
 		for(i = 0; i < tree->want; ++i){
@@ -138,15 +160,21 @@ static void parse_tree_del(parse_tree *tree){
 	free(tree);
 }
 
-static int32_t parse_mbreply(parse_tree *current,const char **str){
+static int32_t  
+parse(parse_tree *current,char **str);
+
+static int32_t 
+parse_mbreply(parse_tree *current,char **str)
+{
 	redisReply *reply = current->reply;
-	size_t i;
+	size_t  i;
+	int32_t ret;
 	if(!current->want){
 		while(**str != '\r'){
-			if(**str != ':' && **str != '\n' && **str != '\0')
+			if(**str != '\n' && **str != '\0')
 	        	reply->elements = (reply->elements*10)+(**str - '0');
 	        if(**str == '\0')
-	        	return -1;
+	        	return REDIS_RETRY;
 	        ++(*str);
 	    }
 	    ++(*str);
@@ -165,55 +193,63 @@ static int32_t parse_mbreply(parse_tree *current,const char **str){
 
 	for(;current->pos < current->want; ++current->pos){
 		if(*(*str) == '\0') 
-			return -1;
-		if(!_parse(current->childs[current->pos],str))
-			return -1;
+			return REDIS_RETRY;
+		ret = parse(current->childs[current->pos],str);
+		if(ret != 0)
+			return ret;
 	}
-	return 0;	
+	return REDIS_OK;	
 }
 
 
-static int32_t  _parse(parse_tree *current,const char **str){
-	int32_t ret = -1;
+static int32_t  
+parse(parse_tree *current,char **str)
+{
+	int32_t ret = REDIS_RETRY;
 	redisReply *reply = current->reply;		
 	if(!reply->type){
-		while(**str == '\r' || **str == '\n')
+		do{
+			if(**str == '+'  || **str == '-'  ||
+			   **str == ':'  || **str == '$'  ||
+			   **str == '*')
+			{
+				reply->type = **str;
+				++(*str);
+				break;
+			}
+			else if(**str == '\0')
+				return REDIS_RETRY;
 			++(*str);
-		reply->type = *(*str)++;
+		}while(1);
 	}
 	switch(reply->type){
-		case REDIS_STATUS:{
+		case '+':{
 			ret = parse_status(current,str);
 			break;
 		}
-		case REDIS_ERROR:{
+		case '-':{
 			ret = parse_error(current,str);
 			break;
 		}
-		case REDIS_IREPLY:{
+		case ':':{
 			ret = parse_integer(current,str);
 			break;
 		}
-		case REDIS_BREPLY:{
+		case '$':{
 			ret = parse_breply(current,str);
 			break;
 		}
-		case REDIS_MBREPLY:{
+		case '*':{
 			ret = parse_mbreply(current,str);
 			break;
 		}							
 		default:{
-			ret = -2;
+			ret = REDIS_ERR;
 			break;
 		}
 	}		
 	return ret;
 }
-
-static int32_t parse(parse_tree *current,const char *str){
-	return _parse(current,&str);
-}
-
 
 typedef struct{
 	listnode node;
@@ -225,7 +261,9 @@ typedef struct{
 
 //for request
 
-static rawpacket *convert(list *l,size_t space){
+static rawpacket*
+convert(list *l,size_t space)
+{
 	char  tmp[32];
 	char  c;
 	char *end = "\r\n";
@@ -261,7 +299,9 @@ static rawpacket *convert(list *l,size_t space){
 }
 
 
-static packet *build_request(const char *cmd){
+static packet*
+build_request(const char *cmd)
+{
 	list l;
 	list_init(&l);
 	char  tmp[32];
