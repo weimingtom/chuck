@@ -56,8 +56,8 @@ int main(int argc,char **argv){
 			redis_query(redis_client,"hmget chaid:1 chainfo skills",cmd_callback,(void*)tmp);
 		}else{
 			snprintf(buff,1024,"hmset chaid:%d chainfo %s skills %s",
-					 i + 1,"fasfsafasfsafasfasfasdfsadfasdfasdfasfdfasdfasfdasdfasdf",
-					 "fasdfasfasdfdsafdsafsadfsafasdfsadfsadfasdfsadfsdafsdafsadfsdf" 
+					 i + 1,"fasfsafasfsaf\rasfasfasdfsadfasdfasdfasfdfasdfasfdasdfasdf",
+					 "fasdfasfasdfdsafdsafs\nadfsafa\r\nsdfsadfsadfasdfsadfsdafsdafsadfsdf" 
 					);
 			redis_query(redis_client,buff,NULL,NULL);
 		}
