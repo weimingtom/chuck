@@ -264,7 +264,7 @@ typedef struct{
 
 //for request
 
-static rawpacket*
+static packet*
 convert(list *l,size_t space)
 {
 	char  tmp[32];
@@ -298,7 +298,7 @@ convert(list *l,size_t space)
 	buffer_write(&writer,&c,sizeof(c));
 	p = rawpacket_new_by_buffer(buffer,0);
 	refobj_dec((refobj*)buffer);
-	return p;
+	return (packet*)p;
 }
 
 
@@ -349,7 +349,7 @@ build_request(const char *cmd)
 		space += (w->e - w->b) + 2;//plus tail \r\n
 		list_pushback(&l,(listnode*)w);
 	}
-	return (packet*)convert(&l,space);
+	return convert(&l,space);
 }
 
 #endif
