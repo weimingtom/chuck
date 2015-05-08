@@ -14,7 +14,7 @@ enum{
 	SENDING   = SOCKET_END << 2,
 };
 
-#define RECV_BUFFSIZE 1024*1
+#define RECV_BUFFSIZE 1024*16
 
 typedef struct{
 	listnode node;
