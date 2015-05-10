@@ -255,11 +255,16 @@ typedef struct{
 }word;
 
 static inline size_t digitcount(uint32_t num){
-	size_t i = 0;
-	do{
-		++i;
-	}while(num/=10);
-	return i;
+	if(num < 10) return 1;
+	else if(num < 100) return 2;
+	else if(num < 1000) return 3;
+	else if(num < 10000) return 4;
+	else if(num < 100000) return 5;
+	else if(num < 1000000) return 6;
+	else if(num < 10000000) return 7;
+	else if(num < 100000000) return 8;
+	else if(num < 1000000000) return 9;
+	else return 10;
 }
 
 static inline void u2s(uint32_t num,char **ptr){
