@@ -16,7 +16,8 @@ typedef struct{
 	int32_t     notifyfd;	
 	void 		(*onmail)(mail *_mail);
 	int32_t     lock;
-	int32_t     wait;         
+	int16_t     wait;
+	int16_t     dead;         
 }tmailbox_;
 
 static __thread tmailbox_ *mailbox_ = NULL;
@@ -208,15 +209,21 @@ send_mail(tmailbox t,mail *mail_)
 		}while(0);	
 	}else{		
 		LOCK(target->lock);
-		while(list_size(&target->global_queue) > MAX_QUENESIZE){
+		while(!target->dead && 
+			   list_size(&target->global_queue) > MAX_QUENESIZE)
+		{
 			UNLOCK(target->lock);
 			SLEEPMS(1);
 			LOCK(target->lock);
 		}
-		if(target->wait && (ret = notify(target)) == 0)
-			target->wait = 0;
-		if(ret == 0)
-			list_pushback(&target->global_queue,(listnode*)mail_);
+		if(target->dead){
+			ret = -ETMCLOSE;
+		}else{
+			if(target->wait && (ret = notify(target)) == 0)
+				target->wait = 0;
+			if(ret == 0)
+				list_pushback(&target->global_queue,(listnode*)mail_);
+		}
 		UNLOCK(target->lock);
 	}
 	refobj_dec(&target->refbase);//cast会调用refobj_inc,所以这里要调用refobj_dec
@@ -227,6 +234,8 @@ send_mail(tmailbox t,mail *mail_)
 void 
 clear_thdmailbox()
 {
-	if(mailbox_)
+	if(mailbox_){
+		mailbox_->dead = 1;
 		refobj_dec(&mailbox_->refbase);
+	}
 }
