@@ -209,12 +209,18 @@ send_mail(tmailbox t,mail *mail_)
 		}while(0);	
 	}else{		
 		LOCK(target->lock);
-		while(!target->dead && 
-			   list_size(&target->global_queue) > MAX_QUENESIZE)
+		int32_t i;
+		for(i = 0;
+			!target->dead && list_size(&target->global_queue) > MAX_QUENESIZE;
+			++i)
 		{
-			UNLOCK(target->lock);
-			SLEEPMS(1);
-			LOCK(target->lock);
+				UNLOCK(target->lock);
+				if(i > 4000){
+					SLEEPMS(1);
+					i = 0;
+				}else
+					SLEEPMS(0);
+				LOCK(target->lock);
 		}
 		if(target->dead){
 			ret = -ETMCLOSE;
